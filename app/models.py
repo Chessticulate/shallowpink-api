@@ -40,7 +40,7 @@ class Invitation(Base):
     from_: Mapped[int] = mapped_column("from", ForeignKey("users.id"), nullable=False)
     to: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     game_type: Mapped[str] = mapped_column(Enum(GameType), nullable=False)
-    response: Mapped[str] = mapped_column(Enum(ResponseType), nullable=False, server_default=ResponseType.PENDING)
+    response: Mapped[str] = mapped_column(Enum(ResponseType), nullable=False, server_default=ResponseType.PENDING.value)
 
 
 class Game(Base):
@@ -54,6 +54,7 @@ class Game(Base):
     player_2: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=True)
     winner: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=True)
     state: Mapped[str] = mapped_column(String, nullable=False, server_default="{}")
+
 
 Base.metadata.create_all(db.engine)
 
