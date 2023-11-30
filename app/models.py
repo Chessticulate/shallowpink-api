@@ -23,6 +23,7 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    password: Mapped[str] = mapped_column(String, nullable=False)
     email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     deleted: Mapped[bool] = mapped_column(Boolean, server_default="FALSE")
     date_joined: Mapped[str] = mapped_column(DateTime, server_default=func.utc_timestamp(), nullable=False)
