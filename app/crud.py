@@ -6,7 +6,7 @@ import bcrypt
 import jwt
 
 def hash_password(pswd: str) -> str:
-    return bycrypt.hashpw(pswd, bcrypt.gensalt())
+    return bcrypt.hashpw(pswd, bcrypt.gensalt())
     
 def check_password(pswd: str, pswd_hash: str) -> bool: 
      return bcrypt.checkpw(pswd, pswd_hash)
@@ -14,7 +14,7 @@ def check_password(pswd: str, pswd_hash: str) -> bool:
 def get_user_by_name(name: str) -> User:    
     with Session(db.engine) as session:
         stmt = select(User).where(User.name == name)
-        return session.execute(stmt).first()
+        return session.execute(stmt).first()[0]
 
 def create_user(name: str, email: str, pswd: str): 
     hashed_pswd = hash_password(pswd) 

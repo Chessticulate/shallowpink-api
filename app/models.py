@@ -26,7 +26,7 @@ class User(Base):
     password: Mapped[str] = mapped_column(String, nullable=False)
     email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     deleted: Mapped[bool] = mapped_column(Boolean, server_default="FALSE")
-    date_joined: Mapped[str] = mapped_column(DateTime, server_default=func.utc_timestamp(), nullable=False)
+    date_joined: Mapped[str] = mapped_column(DateTime, server_default=func.now(), nullable=False)
     wins: Mapped[int] = mapped_column(Integer, server_default="0", nullable=False)
     draws: Mapped[int] = mapped_column(Integer, server_default="0", nullable=False)
     losses: Mapped[int] = mapped_column(Integer, server_default="0", nullable=False)
