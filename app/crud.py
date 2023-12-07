@@ -14,13 +14,16 @@ def check_password(pswd: str, pswd_hash: str) -> bool:
 def get_user_by_name(name: str) -> User:    
     with Session(db.engine) as session:
         stmt = select(User).where(User.name == name)
-        return session.execute(stmt).first()[0]
+        
+        row = session.execute(stmt).first()
+        return row if row is None else row[0]
 
 def create_user(name: str, email: str, pswd: str): 
     hashed_pswd = hash_password(pswd) 
     with Session(db.engine) as session:
         stmt = insert(User).values(name=name, email=email, password=hashed_pswd)
         session.execute(stmt)
+        session.commit()
 
 def login(name: str, pswd: str) -> str:
     user = get_user_by_name(name)
