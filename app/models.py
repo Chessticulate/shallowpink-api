@@ -36,7 +36,7 @@ class Invitation(Base):
     __tablename__ = "invitations"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    date_sent: Mapped[str] = mapped_column(DateTime, server_default=func.utc_timestamp())
+    date_sent: Mapped[str] = mapped_column(DateTime, server_default=func.now())
     date_answered: Mapped[str] = mapped_column(DateTime, nullable=True)
     from_: Mapped[int] = mapped_column("from", ForeignKey("users.id"), nullable=False)
     to: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)

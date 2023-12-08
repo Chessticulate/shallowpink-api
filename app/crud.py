@@ -33,7 +33,7 @@ def login(name: str, pswd: str) -> str:
         return None
     return jwt.encode({"user": name}, CONFIG.secret)
 
-def invite(from_: str, to: str) -> str:
+def invite(from_: str, to: str, game_type: str ="chess") -> str:
     from_user = get_user_by_name(from_)
     to_user = get_user_by_name(to)
     if from_user is None:
@@ -41,10 +41,12 @@ def invite(from_: str, to: str) -> str:
     if to_user is None: 
         return None
     with Session(db.engine) as session:
-        stmt = insert(Invitation).values(from_=from_user.id, to=to_user.id)
-        return session.execute(stmt)
-    
-    
-
-
-
+        invitation = Invitation(from_=from_user.id, to=to_user.id, game_type=game_type)
+        session.add(invitation)
+        session.commit()
+        session.refresh(invitation)
+        return invitation.id
+ 
+def validate_token(token: str) -> bool:
+    return jwt.decode(token, CONFIG.secret, CONFIG.algorithm)
+      
