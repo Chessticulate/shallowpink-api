@@ -1,4 +1,4 @@
-from app.models import db, User, Invitation
+from app.models import db, User, Invitation, GameType
 from app.config import CONFIG
 from sqlalchemy.orm import Session
 from sqlalchemy import select, insert
@@ -18,6 +18,13 @@ def get_user_by_name(name: str) -> User:
         row = session.execute(stmt).first()
         return row if row is None else row[0]
 
+def get_user_by_id(id: int) -> User:
+    with Session(db.engine) as session:
+        stmt = select(User).where(User.id == id)
+
+        row = session.execute(stmt).first()
+        return row if row is None else row[0]
+
 def create_user(name: str, email: str, pswd: str): 
     hashed_pswd = hash_password(pswd) 
     with Session(db.engine) as session:
@@ -33,7 +40,7 @@ def login(name: str, pswd: str) -> str:
         return None
     return jwt.encode({"user": name}, CONFIG.secret)
 
-def invite(from_: str, to: str, game_type: str ="chess") -> str:
+def invite(from_: str, to: str, game_type: str = GameType.CHESS.value) -> Invitation:
     from_user = get_user_by_name(from_)
     to_user = get_user_by_name(to)
     if from_user is None:
@@ -45,7 +52,14 @@ def invite(from_: str, to: str, game_type: str ="chess") -> str:
         session.add(invitation)
         session.commit()
         session.refresh(invitation)
-        return invitation.id
+        return invitation
+
+def get_invite(id: int) -> Invitation:
+    with Session(db.engine) as session:
+        stmt = select(Invitation).where(Invitation.id == id)
+        row = session.execute(stmt).first()
+        return row if row is None else row[0]
+    
  
 def validate_token(token: str) -> bool:
     return jwt.decode(token, CONFIG.secret, CONFIG.algorithm)

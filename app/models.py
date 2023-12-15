@@ -9,13 +9,13 @@ class Base(DeclarativeBase):
 
 
 class GameType(enum.Enum):
-    CHESS = "chess"
+    CHESS = "CHESS"
 
 
 class ResponseType(enum.Enum):
-    ACCEPTED = "accepted"
-    DECLINED = "declined"
-    PENDING = "pending"
+    ACCEPTED = "ACCEPTED"
+    DECLINED = "DECLINED"
+    PENDING = "PENDING"
 
 
 class User(Base):
