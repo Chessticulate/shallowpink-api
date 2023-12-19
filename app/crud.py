@@ -40,7 +40,7 @@ def login(name: str, pswd: str) -> str:
         return None
     return jwt.encode({"user": name}, CONFIG.secret)
 
-def invite(from_: str, to: str, game_type: str = GameType.CHESS.value) -> Invitation:
+def create_invite(from_: str, to: str, game_type: str = GameType.CHESS.value) -> Invitation:
     from_user = get_user_by_name(from_)
     to_user = get_user_by_name(to)
     if from_user is None:
