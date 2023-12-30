@@ -26,7 +26,9 @@ class User(Base):
     password: Mapped[str] = mapped_column(String, nullable=False)
     email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     deleted: Mapped[bool] = mapped_column(Boolean, server_default="FALSE")
-    date_joined: Mapped[str] = mapped_column(DateTime, server_default=func.now(), nullable=False)
+    date_joined: Mapped[str] = mapped_column(
+        DateTime, server_default=func.now(), nullable=False
+    )
     wins: Mapped[int] = mapped_column(Integer, server_default="0", nullable=False)
     draws: Mapped[int] = mapped_column(Integer, server_default="0", nullable=False)
     losses: Mapped[int] = mapped_column(Integer, server_default="0", nullable=False)
@@ -41,7 +43,9 @@ class Invitation(Base):
     from_: Mapped[int] = mapped_column("from", ForeignKey("users.id"), nullable=False)
     to: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     game_type: Mapped[str] = mapped_column(Enum(GameType), nullable=False)
-    response: Mapped[str] = mapped_column(Enum(ResponseType), nullable=False, server_default=ResponseType.PENDING.value)
+    response: Mapped[str] = mapped_column(
+        Enum(ResponseType), nullable=False, server_default=ResponseType.PENDING.value
+    )
 
 
 class Game(Base):
@@ -49,7 +53,9 @@ class Game(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     game_type: Mapped[str] = mapped_column(Enum(GameType), nullable=False)
-    date_started: Mapped[str] = mapped_column(DateTime, server_default=func.utc_timestamp(), nullable=True)
+    date_started: Mapped[str] = mapped_column(
+        DateTime, server_default=func.utc_timestamp(), nullable=True
+    )
     date_ended: Mapped[str] = mapped_column(DateTime, nullable=True)
     player_1: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=True)
     player_2: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=True)
@@ -58,4 +64,3 @@ class Game(Base):
 
 
 Base.metadata.create_all(db.engine)
-
