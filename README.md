@@ -1,6 +1,12 @@
 # Chessticulate API
 REST API for our chessticulate website.
 
+## Main functional dependencies
+- FastAPI: easy to use web framework that comes with type checking (via pydantic) and auto generated swagger pages
+- SQLAlchemy: SQL library with ORM
+- databases: asynchronous database engine (replaces SQLAlchemy's synchronous engine)
+- httpx: asynchronous http client for communicating with [chess-workers api](https://github.com/Chessticulate/chess-workers)
+
 ## Setup
 1. Clone repository: `git clone git@github.com:chessticulate/chessticulate-api && cd chessticulate-api`
 2. Create virtual environment: `python -m venv venv && source venv/bin/activate`
