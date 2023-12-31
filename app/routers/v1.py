@@ -1,5 +1,6 @@
-from app import crud, schemas
 from fastapi import APIRouter
+
+from app import crud, schemas
 
 router = APIRouter()
 

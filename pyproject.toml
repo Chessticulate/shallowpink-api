@@ -2,12 +2,11 @@
 name = "chessticulate-api"
 version = "0.2.0"
 requires-python = ">=3.9"
-dependencies = ["fastapi[all]", "sqlalchemy", "httpx", "python-dotenv", "py-bcrypt", "pyjwt"]
+dependencies = ["fastapi[all]", "sqlalchemy==2", "httpx", "python-dotenv", "py-bcrypt", "pyjwt", "databases"]
 
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project.optional-dependencies]
-dev = ["black", "pylint", "pytest"]
-
+dev = ["black", "pylint", "pytest", "isort"]

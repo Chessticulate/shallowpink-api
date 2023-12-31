@@ -1,1 +1,1 @@
-import app.main
+"""Chessticulate API Entrypoint"""

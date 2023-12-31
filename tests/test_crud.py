@@ -1,19 +1,21 @@
-from app import crud
-from app.config import CONFIG
-from app.models import ResponseType, GameType
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
+
 import jwt
 import pytest
 import sqlalchemy
 from pydantic import SecretStr
 
+from app import crud
+from app.config import CONFIG
+from app.models import GameType, ResponseType
+
 
 def test_password_hashing():
     pswd = SecretStr("test password")
 
-    pswd_hash = crud.hash_password(pswd)
+    pswd_hash = crud._hash_password(pswd)
 
-    assert crud.check_password(pswd, pswd_hash)
+    assert crud._check_password(pswd, pswd_hash)
 
 
 def test_get_user_by_name(init_fake_user_data, fake_user_data):
@@ -49,7 +51,7 @@ def test_create_user(drop_all_users):
 
     assert user.name == fake_name
     assert user.email == fake_email
-    assert crud.check_password(fake_password, user.password)
+    assert crud._check_password(fake_password, user.password)
 
     # test creating users with duplicate id's emails usernames etc
     # username too long/short, invalid chars
@@ -109,9 +111,9 @@ def test_get_invite(init_fake_user_data):
     assert crud.get_invite("id") is None
 
     invitation = crud.create_invite("fakeuser1", "fakeuser2")
-    invite = crud.get_invite(invitation.id)
+    invite = crud.get_invite(invitation.id_)
 
-    assert invite.id == invitation.id
+    assert invite.id_ == invitation.id_
     assert invite.from_ == invitation.from_
     assert invite.to == invitation.to
     assert invite.game_type.value == invitation.game_type.value

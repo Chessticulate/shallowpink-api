@@ -1,9 +1,11 @@
-from app import db, schemas, models
+"""app.main
+
+Contains the main FastAPI object definition.
+
+Variables:
+    chess_app
+"""
+
 from fastapi import FastAPI
 
 chess_app = FastAPI()
-
-
-@chess_app.post("/invite")
-def create_invite(invite: schemas.CreateInvite):
-    return {"message": "OK"}

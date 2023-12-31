@@ -1,65 +1,98 @@
+"""app.models
+
+SQLAlchemy ORM models
+
+Classes:
+    Base
+    GameType
+    ResponseType
+    User
+    Invitation
+    Game
+"""
+
 import enum
+
+from sqlalchemy import (Boolean, DateTime, Enum, ForeignKey, Integer, String,
+                        func)
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
 from app import db
-from sqlalchemy import func, String, DateTime, ForeignKey, Enum, Integer, Boolean
-from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped
 
 
-class Base(DeclarativeBase):
-    pass
+class Base(DeclarativeBase):  # pylint: disable=too-few-public-methods
+    """Base SQLAlchemy ORM Class"""
 
 
 class GameType(enum.Enum):
+    """GameType Enum
+
+    This enum contains the available game types.
+    """
+
     CHESS = "CHESS"
 
 
 class ResponseType(enum.Enum):
+    """Invitation Response Enum"""
+
     ACCEPTED = "ACCEPTED"
     DECLINED = "DECLINED"
     PENDING = "PENDING"
 
 
-class User(Base):
+class User(Base):  # pylint: disable=too-few-public-methods
+    """User SQL Model"""
+
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id_: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     password: Mapped[str] = mapped_column(String, nullable=False)
     email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     deleted: Mapped[bool] = mapped_column(Boolean, server_default="FALSE")
     date_joined: Mapped[str] = mapped_column(
-        DateTime, server_default=func.now(), nullable=False
+        DateTime,
+        server_default=func.now(),  # pylint: disable=not-callable
+        nullable=False,
     )
     wins: Mapped[int] = mapped_column(Integer, server_default="0", nullable=False)
     draws: Mapped[int] = mapped_column(Integer, server_default="0", nullable=False)
     losses: Mapped[int] = mapped_column(Integer, server_default="0", nullable=False)
 
 
-class Invitation(Base):
+class Invitation(Base):  # pylint: disable=too-few-public-methods
+    """Invitation SQL Model"""
+
     __tablename__ = "invitations"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    date_sent: Mapped[str] = mapped_column(DateTime, server_default=func.now())
+    id_: Mapped[int] = mapped_column(primary_key=True)
+    date_sent: Mapped[str] = mapped_column(
+        DateTime, server_default=func.now()  # pylint: disable=not-callable
+    )
     date_answered: Mapped[str] = mapped_column(DateTime, nullable=True)
-    from_: Mapped[int] = mapped_column("from", ForeignKey("users.id"), nullable=False)
-    to: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    from_: Mapped[int] = mapped_column("from", ForeignKey("users.id_"), nullable=False)
+    to: Mapped[int] = mapped_column(ForeignKey("users.id_"), nullable=False)
     game_type: Mapped[str] = mapped_column(Enum(GameType), nullable=False)
     response: Mapped[str] = mapped_column(
         Enum(ResponseType), nullable=False, server_default=ResponseType.PENDING.value
     )
 
 
-class Game(Base):
+class Game(Base):  # pylint: disable=too-few-public-methods
+    """Game SQL Model"""
+
     __tablename__ = "games"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id_: Mapped[int] = mapped_column(primary_key=True)
     game_type: Mapped[str] = mapped_column(Enum(GameType), nullable=False)
     date_started: Mapped[str] = mapped_column(
         DateTime, server_default=func.utc_timestamp(), nullable=True
     )
     date_ended: Mapped[str] = mapped_column(DateTime, nullable=True)
-    player_1: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=True)
-    player_2: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=True)
-    winner: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=True)
+    player_1: Mapped[int] = mapped_column(ForeignKey("users.id_"), nullable=True)
+    player_2: Mapped[int] = mapped_column(ForeignKey("users.id_"), nullable=True)
+    winner: Mapped[int] = mapped_column(ForeignKey("users.id_"), nullable=True)
     state: Mapped[str] = mapped_column(String, nullable=False, server_default="{}")
 
 

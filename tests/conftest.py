@@ -1,8 +1,9 @@
-from app import db, models, crud, config
-from sqlalchemy.orm import Session
-from sqlalchemy import delete
-from pytest import fixture
 from pydantic import SecretStr
+from pytest import fixture
+from sqlalchemy import delete
+from sqlalchemy.orm import Session
+
+from app import config, crud, db, models
 
 
 @fixture
@@ -43,7 +44,7 @@ def fake_user_data():
 def init_fake_user_data(fake_user_data, drop_all_users, fake_app_secret):
     with Session(db.engine) as session:
         for data in fake_user_data:
-            pswd = crud.hash_password(SecretStr(data.pop("password")))
+            pswd = crud._hash_password(SecretStr(data.pop("password")))
             user = models.User(**data, password=pswd)
             session.add(user)
         session.commit()
