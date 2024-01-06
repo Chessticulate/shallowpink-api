@@ -36,7 +36,7 @@ jobs:
                 python -m pip install --upgrade pip
                 pip install --editable .[dev]
             - name: Run pylint
-              run: pylint --fail-on all chessticulate_app
+              run: pylint --fail-on all chessticulate_api
 
     test:
         runs-on: ubuntu-latest
