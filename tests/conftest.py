@@ -1,25 +1,26 @@
+import pytest
+import pytest_asyncio
 from pydantic import SecretStr
-from pytest import fixture
 from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
-from app import config, crud, db, models
+from chessticulate_api import config, crud, db, models
 
 
-@fixture
+@pytest.fixture
 def fake_app_secret():
     config.CONFIG.secret = "fake_secret"
 
 
-@fixture
-def drop_all_users():
-    with Session(db.engine) as session:
+@pytest_asyncio.fixture
+async def drop_all_users():
+    async with db.async_session() as session:
         stmt = delete(models.User)
-        session.execute(stmt)
-        session.commit()
+        await session.execute(stmt)
+        await session.commit()
 
 
-@fixture
+@pytest.fixture
 def fake_user_data():
     return [
         {
@@ -40,11 +41,11 @@ def fake_user_data():
     ]
 
 
-@fixture
-def init_fake_user_data(fake_user_data, drop_all_users, fake_app_secret):
-    with Session(db.engine) as session:
+@pytest_asyncio.fixture
+async def init_fake_user_data(fake_user_data, drop_all_users, fake_app_secret):
+    async with db.async_session() as session:
         for data in fake_user_data:
             pswd = crud._hash_password(SecretStr(data.pop("password")))
             user = models.User(**data, password=pswd)
             session.add(user)
-        session.commit()
+        await session.commit()

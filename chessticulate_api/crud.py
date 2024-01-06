@@ -7,8 +7,9 @@ Functions:
     get_user_by_id(id_: str) -> User
     create_user(name: str, email: str, pswd: SecretStr) -> User
     login(name: str, pswd: SecretStr) -> str
-    create_invite(from_: str, to: str, game_type: str = GameType.CHESS.value) -> Invitation
-    get_invite(id_: int) -> Invitation
+    create_invitation(from_: str, to: str, game_type: str = GameType.CHESS.value)
+        -> Invitation
+    get_invitation(id_: int) -> Invitation
     validate_token(token: str) -> bool
 """
 
@@ -18,10 +19,10 @@ import bcrypt
 import jwt
 from pydantic import SecretStr
 from sqlalchemy import select
-from sqlalchemy.orm import Session
 
-from app.config import CONFIG
-from app.models import GameType, Invitation, User, db
+from chessticulate_api.config import CONFIG
+from chessticulate_api.db import async_session
+from chessticulate_api.models import GameType, Invitation, User
 
 
 def _hash_password(pswd: SecretStr) -> str:
@@ -38,39 +39,39 @@ def _check_password(pswd: SecretStr, pswd_hash: str) -> bool:
     )
 
 
-def get_user_by_name(name: str) -> User:
+async def get_user_by_name(name: str) -> User:
     """retrieve user from database by user name"""
-    with Session(db.engine) as session:
+    async with async_session() as session:
         stmt = select(User).where(User.name == name)
 
-        row = session.execute(stmt).first()
+        row = (await session.execute(stmt)).first()
         return row if row is None else row[0]
 
 
-def get_user_by_id(id_: int) -> User:
+async def get_user_by_id(id_: int) -> User:
     """retrieve user from database by user ID"""
-    with Session(db.engine) as session:
+    async with async_session() as session:
         stmt = select(User).where(User.id_ == id_)
 
-        row = session.execute(stmt).first()
+        row = (await session.execute(stmt)).first()
         return row if row is None else row[0]
 
 
 # create_user name should use pydantic SecretStr
-def create_user(name: str, email: str, pswd: SecretStr) -> User:
+async def create_user(name: str, email: str, pswd: SecretStr) -> User:
     """create a new user"""
     hashed_pswd = _hash_password(pswd)
-    with Session(db.engine) as session:
+    async with async_session() as session:
         user = User(name=name, email=email, password=hashed_pswd)
         session.add(user)
-        session.commit()
-        session.refresh(user)
+        await session.commit()
+        await session.refresh(user)
         return user
 
 
-def login(name: str, pswd: SecretStr) -> str:
+async def login(name: str, pswd: SecretStr) -> str:
     """validate user name and password, return a JWT"""
-    user = get_user_by_name(name)
+    user = await get_user_by_name(name)
     if user is None:
         return None
     if not _check_password(pswd, user.password):
@@ -84,31 +85,31 @@ def login(name: str, pswd: SecretStr) -> str:
     )
 
 
-def create_invite(
+async def create_invitation(
     from_: str, to: str, game_type: str = GameType.CHESS.value
 ) -> Invitation:
     """create a new invitation"""
-    from_user = get_user_by_name(from_)
-    to_user = get_user_by_name(to)
+    from_user = await get_user_by_name(from_)
+    to_user = await get_user_by_name(to)
     if from_user is None:
         return None
     if to_user is None:
         return None
-    with Session(db.engine) as session:
+    async with async_session() as session:
         invitation = Invitation(
             from_=from_user.id_, to=to_user.id_, game_type=game_type
         )
         session.add(invitation)
-        session.commit()
-        session.refresh(invitation)
+        await session.commit()
+        await session.refresh(invitation)
         return invitation
 
 
-def get_invite(id_: int) -> Invitation:
+async def get_invitation(id_: int) -> Invitation:
     """retrieve an invitation by ID"""
-    with Session(db.engine) as session:
+    async with async_session() as session:
         stmt = select(Invitation).where(Invitation.id_ == id_)
-        row = session.execute(stmt).first()
+        row = (await session.execute(stmt)).first()
         return row if row is None else row[0]
 
 

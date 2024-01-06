@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app import crud, schemas
+from chessticulate_api import crud, schemas
 
 router = APIRouter()
 

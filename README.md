@@ -4,7 +4,6 @@ REST API for our chessticulate website.
 ## Main functional dependencies
 - FastAPI: easy to use web framework that comes with type checking (via pydantic) and auto generated swagger pages
 - SQLAlchemy: SQL library with ORM
-- databases: asynchronous database engine (replaces SQLAlchemy's synchronous engine)
 - httpx: asynchronous http client for communicating with [chess-workers api](https://github.com/Chessticulate/chess-workers)
 
 ## Setup

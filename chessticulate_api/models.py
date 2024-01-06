@@ -9,15 +9,17 @@ Classes:
     User
     Invitation
     Game
+
+Functions:
+    init_db
 """
 
 import enum
 
-from sqlalchemy import (Boolean, DateTime, Enum, ForeignKey, Integer, String,
-                        func)
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-from app import db
+from chessticulate_api.db import async_engine
 
 
 class Base(DeclarativeBase):  # pylint: disable=too-few-public-methods
@@ -96,4 +98,7 @@ class Game(Base):  # pylint: disable=too-few-public-methods
     state: Mapped[str] = mapped_column(String, nullable=False, server_default="{}")
 
 
-Base.metadata.create_all(db.engine)
+async def init_db():
+    """Submit DDL to database"""
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
