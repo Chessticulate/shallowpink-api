@@ -12,8 +12,8 @@ REST API for our chessticulate website.
 3. Editable install: `pip install -e .[dev]`
 
 ## Development tools
-- Run formatters: `black --preview . && isort .`
-- Run linter: `pylint app`
+- Run formatters: `black . && isort .`
+- Run linter: `pylint chessticulate_api`
 - Run tests: `pytest`
 
 ## CI
