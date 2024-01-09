@@ -33,7 +33,6 @@ class CreateUserResponse(BaseModel):
     id: int
     name: str
     email: str
-    deleted: bool
     date_joined: str
     wins: int
     draws: int
@@ -69,3 +68,8 @@ class CreateUserRequest(BaseModel):
     ]
     email: EmailStr
     password: Annotated[SecretStr, BeforeValidator(_validate_password)]
+
+class GetUserResponse(CreateUserResponse):
+    """Pydantic model for get user response"""
+
+    
