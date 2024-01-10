@@ -1,5 +1,4 @@
-from fastapi import APIRouter
-
+from fastapi import APIRouter, HTTPException
 from chessticulate_api import crud, schemas
 
 router = APIRouter()
@@ -20,4 +19,9 @@ async def get_user(user_id: int | None = None, user_name: str | None = None) -> 
         return dict(await crud.get_user_by_id(user_id))
     if user_name:
         return dict(await crud.get_user_by_name(user_name))
-    
+
+    raise HTTPException(status_code=400, detail="must provide either 'user_id' or 'user_name'") 
+
+@router.post("/invitation")
+async def create_invitation(payload: schemas.CreateInviteRequest) -> schemas.CreateInviteResponse:
+    return dict(await crud.create_invitation(payload.from_, payload.to))

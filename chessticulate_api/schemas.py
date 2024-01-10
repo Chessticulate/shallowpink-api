@@ -14,13 +14,23 @@ from pydantic.functional_validators import BeforeValidator
 from typing_extensions import Annotated
 
 
-class CreateInvite(BaseModel):
+class CreateInviteRequest(BaseModel):
     """Pydantic model for invite creation requests."""
 
     to: str
     game_type: str
 
-
+class CreateInviteResponse(BaseModel):
+    """pydantic model for invite creation response"""
+    
+    id_: int
+    date_sent: str
+    date_answered: str
+    from_: int
+    to: int
+    game_type: str
+    response: str
+    
 class LoginResponse(BaseModel):
     """Pydantic model for login responses."""
 
@@ -72,4 +82,4 @@ class CreateUserRequest(BaseModel):
 class GetUserResponse(CreateUserResponse):
     """Pydantic model for get user response"""
 
-    
+
