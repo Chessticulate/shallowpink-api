@@ -79,7 +79,8 @@ async def login(name: str, pswd: SecretStr) -> str:
     return jwt.encode(
         {
             "exp": datetime.now(tz=timezone.utc) + timedelta(days=CONFIG.token_ttl),
-            "user": name,
+            "user_name": name,
+            "user_id": user.id_,
         },
         CONFIG.secret,
     )
@@ -113,6 +114,6 @@ async def get_invitation(id_: int) -> Invitation:
         return row if row is None else row[0]
 
 
-def validate_token(token: str) -> bool:
+def validate_token(token: str) -> dict:
     """validate a JWT"""
     return jwt.decode(token, CONFIG.secret, CONFIG.algorithm)

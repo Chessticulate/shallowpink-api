@@ -74,7 +74,7 @@ async def test_login_validate_token(init_fake_user_data):
 
     token = await crud.login("fakeuser1", SecretStr("fakepswd1"))
     decoded_token = crud.validate_token(token)
-    assert decoded_token["user"] == "fakeuser1"
+    assert decoded_token["user_name"] == "fakeuser1"
 
     assert await crud.login("baduser", SecretStr("badpswd")) is None
 
@@ -84,7 +84,7 @@ async def test_login_validate_token(init_fake_user_data):
     token = jwt.encode(
         {
             "exp": datetime.now(tz=timezone.utc) - timedelta(days=CONFIG.token_ttl),
-            "user": "fakeuser1",
+            "user_name": "fakeuser1",
         },
         CONFIG.secret,
     )

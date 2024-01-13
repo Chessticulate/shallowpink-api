@@ -3,34 +3,47 @@
 Pydantic schemas for FastAPI endpoints.
 
 Classes:
-    CreateInvite
+    CreateInvitation
     LoginResponse
     CreateUserResponse
     CreateUserRequest
 """
 
-from pydantic import BaseModel, EmailStr, SecretStr, StringConstraints
+import enum
+
+from pydantic import BaseModel, EmailStr, Field, SecretStr, StringConstraints
 from pydantic.functional_validators import BeforeValidator
 from typing_extensions import Annotated
 
 
-class CreateInviteRequest(BaseModel):
+class GameTypeEnum(str, enum.Enum):
+    """Game Type Enum"""
+
+    CHESS = "CHESS"
+
+
+class CreateInvitationRequest(BaseModel):
     """Pydantic model for invite creation requests."""
 
     to: str
-    game_type: str
+    game_type: GameTypeEnum
 
-class CreateInviteResponse(BaseModel):
+    class Config:  # pylint: disable=missing-class-docstring,too-few-public-methods
+        use_enum_values = True
+
+
+class CreateInvitationResponse(BaseModel):
     """pydantic model for invite creation response"""
-    
-    id_: int
+
+    id_: int = Field(..., alias="id")
     date_sent: str
     date_answered: str
     from_: int
     to: int
     game_type: str
     response: str
-    
+
+
 class LoginResponse(BaseModel):
     """Pydantic model for login responses."""
 
@@ -40,7 +53,7 @@ class LoginResponse(BaseModel):
 class CreateUserResponse(BaseModel):
     """Pydantic model for user creation responses."""
 
-    id: int
+    id_: int = Field(..., alias="id")
     name: str
     email: str
     date_joined: str
@@ -79,7 +92,14 @@ class CreateUserRequest(BaseModel):
     email: EmailStr
     password: Annotated[SecretStr, BeforeValidator(_validate_password)]
 
+
 class GetUserResponse(CreateUserResponse):
-    """Pydantic model for get user response"""
+    """Pydantic model for get user response."""
 
-
+    id_: int = Field(..., alias="id")
+    name: str
+    email: str
+    date_joined: str
+    wins: int
+    draws: int
+    losses: int
