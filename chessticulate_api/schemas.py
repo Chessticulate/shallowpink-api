@@ -26,7 +26,7 @@ class CreateInvitationRequest(BaseModel):
     """Pydantic model for invite creation requests."""
 
     to: str
-    game_type: GameTypeEnum
+    game_type: GameTypeEnum = GameTypeEnum.CHESS
 
     class Config:  # pylint: disable=missing-class-docstring,too-few-public-methods
         use_enum_values = True
@@ -35,6 +35,20 @@ class CreateInvitationRequest(BaseModel):
 class CreateInvitationResponse(BaseModel):
     """pydantic model for invite creation response"""
 
+    id_: int = Field(..., alias="id")
+    date_sent: str
+    date_answered: str
+    from_: int
+    to: int
+    game_type: str
+    response: str
+
+class GetInvitationRequest(BaseModel):
+    """pydantic model for get invitation
+
+class GetInvitationResponse(BaseModel):
+    """pydantic model for get invitation response"""
+     
     id_: int = Field(..., alias="id")
     date_sent: str
     date_answered: str
@@ -93,7 +107,7 @@ class CreateUserRequest(BaseModel):
     password: Annotated[SecretStr, BeforeValidator(_validate_password)]
 
 
-class GetUserResponse(CreateUserResponse):
+class GetUserResponse(BaseModel):
     """Pydantic model for get user response."""
 
     id_: int = Field(..., alias="id")
@@ -103,3 +117,5 @@ class GetUserResponse(CreateUserResponse):
     wins: int
     draws: int
     losses: int
+
+

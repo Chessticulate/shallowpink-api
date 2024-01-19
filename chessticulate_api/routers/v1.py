@@ -55,3 +55,20 @@ async def create_invitation(
     payload: schemas.CreateInviteRequest,
 ) -> schemas.CreateInviteResponse:
     return dict(await crud.create_invitation(credentials["user_id"], payload.to))
+
+
+@router.get("/invitation")
+async def get_invitation(
+        credentials: Annotated[dict, Depends(get_credentials)], 
+        invitation_id: int | None = None,
+        from_id: int | None = None,
+        from_name: str | None = None,
+        status: str | None = None,
+        skip: int | None = 10,
+        limit: int | None = 1) -> schemas.GetInvitationResponse:
+
+    return dict(await crud.get_invitations(
+        to = credentials["user_id"],
+        from_ = from_id,
+
+        
