@@ -106,12 +106,15 @@ async def create_invitation(
         return invitation
 
 
-async def get_invitation(id_: int) -> Invitation:
-    """retrieve an invitation by ID"""
+async def get_invitations(skip: int = 10, limit: int = 1, **kwargs) -> list[Invitation]:
+    """retrieve an invitations from DB"""
     async with async_session() as session:
-        stmt = select(Invitation).where(Invitation.id_ == id_)
-        row = (await session.execute(stmt)).first()
-        return row if row is None else row[0]
+        stmt = select(Invitation)
+        for k, v in kwargs.items():
+            stmt = stmt.where(getattr(Invitation, k) == v)
+        stmt = stmt.offset(skip).limit(limit)
+        result = [ row[0] for row in (await session.execute(stmt)).all() ]
+        return result
 
 
 def validate_token(token: str) -> dict:
