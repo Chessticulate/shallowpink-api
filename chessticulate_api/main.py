@@ -8,7 +8,7 @@ Variables:
 
 from fastapi import FastAPI
 
-from chessticulate_api import models
+from chessticulate_api import models, routers
 
 app = FastAPI()
 
@@ -18,3 +18,6 @@ async def on_startup_and_shutdown():
     """initialize database with DDL"""
 
     await models.init_db()
+
+
+app.include_router(routers.v1.router)

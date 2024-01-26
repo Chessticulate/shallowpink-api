@@ -1,8 +1,11 @@
+from typing import Annotated
+
 import jwt
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security.http import HTTPAuthorizationCredentials, HTTPBearer
 
-from chessticulate_api import crud, schemas
+from chessticulate_api import crud
+from chessticulate_api.routers.v1 import schemas
 
 router = APIRouter()
 
@@ -52,8 +55,8 @@ async def get_user(
 @router.post("/invitation")
 async def create_invitation(
     credentials: Annotated[dict, Depends(get_credentials)],
-    payload: schemas.CreateInviteRequest,
-) -> schemas.CreateInviteResponse:
+    payload: schemas.CreateInvitationRequest,
+) -> schemas.CreateInvitationResponse:
     return dict(await crud.create_invitation(credentials["user_id"], payload.to))
 
 
@@ -61,14 +64,16 @@ async def create_invitation(
 async def get_invitation(
         credentials: Annotated[dict, Depends(get_credentials)], 
         invitation_id: int | None = None,
+        to_id: int | None = None,
         from_id: int | None = None,
-        from_name: str | None = None,
         status: str | None = None,
         skip: int | None = 10,
         limit: int | None = 1) -> schemas.GetInvitationResponse:
+    if from_id and to_id:
+        raise HTTPException(status_code=400, detail="'from_id' and 'to_id' are mutually exclusive")
 
-    return dict(await crud.get_invitations(
-        to = credentials["user_id"],
-        from_ = from_id,
-
-        
+    args = {
+        "id_": invitation_id,
+        "to": credentials["user_id"] if not to_id else to_id,
+        "from_": credentials["user_id"] if not from_id else from_id
+    }

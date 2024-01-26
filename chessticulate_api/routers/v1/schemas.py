@@ -43,8 +43,6 @@ class CreateInvitationResponse(BaseModel):
     game_type: str
     response: str
 
-class GetInvitationRequest(BaseModel):
-    """pydantic model for get invitation
 
 class GetInvitationResponse(BaseModel):
     """pydantic model for get invitation response"""

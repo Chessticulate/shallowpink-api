@@ -5,9 +5,9 @@ SQLAlchemy ORM models
 Classes:
     Base
     GameType
-    ResponseType
     User
     Invitation
+    InvitationStatus
     Game
 
 Functions:
@@ -35,7 +35,7 @@ class GameType(enum.Enum):
     CHESS = "CHESS"
 
 
-class ResponseType(enum.Enum):
+class InvitationStatus(enum.Enum):
     """Invitation Response Enum"""
 
     ACCEPTED = "ACCEPTED"
@@ -76,8 +76,8 @@ class Invitation(Base):  # pylint: disable=too-few-public-methods
     from_: Mapped[int] = mapped_column("from", ForeignKey("users.id_"), nullable=False)
     to: Mapped[int] = mapped_column(ForeignKey("users.id_"), nullable=False)
     game_type: Mapped[str] = mapped_column(Enum(GameType), nullable=False)
-    response: Mapped[str] = mapped_column(
-        Enum(ResponseType), nullable=False, server_default=ResponseType.PENDING.value
+    status: Mapped[str] = mapped_column(
+        Enum(InvitationStatus), nullable=False, server_default=InvitationStatus.PENDING.value
     )
 
 
