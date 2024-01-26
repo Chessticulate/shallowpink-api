@@ -5,9 +5,8 @@ import pytest
 import sqlalchemy
 from pydantic import SecretStr
 
-from chessticulate_api import crud
+from chessticulate_api import crud, models
 from chessticulate_api.config import CONFIG
-from chessticulate_api.models import GameType, ResponseType
 
 
 def test_password_hashing():
@@ -100,23 +99,23 @@ async def test_create_invitation(init_fake_user_data):
 
     invitation = await crud.create_invitation("fakeuser1", "fakeuser2")
 
-    assert invitation.response.value is ResponseType.PENDING.value
+    assert invitation.status.value is models.InvitationStatus.PENDING.value
     assert (await crud.get_user_by_id(invitation.from_)).name == "fakeuser1"
     assert (await crud.get_user_by_id(invitation.to)).name == "fakeuser2"
-    assert invitation.game_type.value is GameType.CHESS.value
+    assert invitation.game_type.value is models.GameType.CHESS.value
 
 
 @pytest.mark.asyncio
-async def test_get_invitation(init_fake_user_data):
+async def test_get_invitations(init_fake_user_data):
     # invitation cannot be made with non existent users
 
     invitation = await crud.create_invitation("fakeuser1", "fakeuser2")
-    invitation = await crud.get_invitation(invitation.id_)
+    result = await crud.get_invitations(id_=invitation.id_)
 
-    assert invitation.id_ == invitation.id_
-    assert invitation.from_ == invitation.from_
-    assert invitation.to == invitation.to
-    assert invitation.game_type.value == invitation.game_type.value
-    assert invitation.response.value == invitation.response.value
+    assert result[0].id_ == invitation.id_
+    assert result[0].from_ == invitation.from_
+    assert result[0].to == invitation.to
+    assert result[0].game_type.value == invitation.game_type.value
+    assert result[0].status.value == invitation.status.value
 
     await crud.create_invitation("fakeuser1", "nonexistent")
