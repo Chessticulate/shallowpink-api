@@ -118,4 +118,5 @@ async def test_get_invitations(init_fake_user_data):
     assert result[0].game_type.value == invitation.game_type.value
     assert result[0].status.value == invitation.status.value
 
-    await crud.create_invitation("fakeuser1", "nonexistent")
+    assert await crud.create_invitation("fakeuser1", "nonexistent") == None
+

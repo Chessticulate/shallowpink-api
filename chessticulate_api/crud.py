@@ -9,7 +9,7 @@ Functions:
     login(name: str, pswd: SecretStr) -> str
     create_invitation(from_: str, to: str, game_type: str = models.GameType.CHESS.value)
         -> models.Invitation
-    get_invitation(id_: int) -> list[models.Invitation]
+    get_invitations(*, skip: int = 0, limit: int = 10, reverse: bool = False, **kwargs) -> list[models.Invitation]:
     validate_token(token: str) -> bool
 """
 
