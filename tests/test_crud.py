@@ -94,14 +94,14 @@ async def test_login_validate_token(init_fake_user_data):
 
 @pytest.mark.asyncio
 async def test_create_invitation(init_fake_user_data):
-    # both users must exist for a valid invitation
-    assert await crud.create_invitation("fakeuser1", "baduser") is None
+    user_1 = await crud.get_user_by_name("fakeuser1")
+    user_2 = await crud.get_user_by_name("fakeuser2")
 
-    invitation = await crud.create_invitation("fakeuser1", "fakeuser2")
-
+    invitation = await crud.create_invitation(user_1.id_, user_2.id_)
+   
     assert invitation.status.value is models.InvitationStatus.PENDING.value
-    assert (await crud.get_user_by_id(invitation.from_)).name == "fakeuser1"
-    assert (await crud.get_user_by_id(invitation.to)).name == "fakeuser2"
+    assert (await crud.get_user_by_id(invitation.from_id)).name == "fakeuser1"
+    assert (await crud.get_user_by_id(invitation.to_id)).name == "fakeuser2"
     assert invitation.game_type.value is models.GameType.CHESS.value
 
 
@@ -109,14 +109,14 @@ async def test_create_invitation(init_fake_user_data):
 async def test_get_invitations(init_fake_user_data):
     # invitation cannot be made with non existent users
 
-    invitation = await crud.create_invitation("fakeuser1", "fakeuser2")
+    user_1 = await crud.get_user_by_name("fakeuser1")
+    user_2 = await crud.get_user_by_name("fakeuser2")
+
+    invitation = await crud.create_invitation(user_1.id_, user_2.id_)
     result = await crud.get_invitations(id_=invitation.id_)
 
     assert result[0].id_ == invitation.id_
-    assert result[0].from_ == invitation.from_
-    assert result[0].to == invitation.to
+    assert result[0].from_id == invitation.from_id
+    assert result[0].to_id == invitation.to_id
     assert result[0].game_type.value == invitation.game_type.value
     assert result[0].status.value == invitation.status.value
-
-    assert await crud.create_invitation("fakeuser1", "nonexistent") == None
-

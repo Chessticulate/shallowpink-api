@@ -60,20 +60,35 @@ async def create_invitation(
     return dict(await crud.create_invitation(credentials["user_id"], payload.to))
 
 
-@router.get("/invitation")
-async def get_invitation(
+@router.get("/invitations")
+async def get_invitations(
         credentials: Annotated[dict, Depends(get_credentials)], 
+        to_id: int,
+        from_id: int,
         invitation_id: int | None = None,
-        to_id: int | None = None,
-        from_id: int | None = None,
         status: str | None = None,
         skip: int | None = 10,
         limit: int | None = 1) -> schemas.GetInvitationResponse:
-    if from_id and to_id:
-        raise HTTPException(status_code=400, detail="'from_id' and 'to_id' are mutually exclusive")
+
+    if from_id != credentials["user_id"] and to_id != credentials["user_id"]
+        raise HTTPException(status_code=400, detail="requestor id must match either 'from_id' or 'to_id'")           
 
     args = {
-        "id_": invitation_id,
-        "to": credentials["user_id"] if not to_id else to_id,
-        "from_": credentials["user_id"] if not from_id else from_id
+        "to_id": to_id,
+        "from_id": from_id,
+        "skip": skip,
+        "limit": limit
     }
+    if invitation_id: 
+        args["invitation_id"] = invitation_id
+    if status:
+        args["status"] = status
+    result = await crud.get_invitations(**args)
+   
+    return [dict(inv) for inv in result]
+
+
+
+@router.post("/invitations/{invitation_id}/accept")
+async def accept_invitation(credentials: Annotated[dict, Depends(get_credentials)], invitation_id: int) -> schemas.AcceptInvitationResponse
+    

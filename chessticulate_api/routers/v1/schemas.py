@@ -116,4 +116,7 @@ class GetUserResponse(BaseModel):
     draws: int
     losses: int
 
-
+class AcceptInvitationResponse(BaseModel):
+    """Pydantic model for accepting game invitation"""
+    
+   game_id: int  

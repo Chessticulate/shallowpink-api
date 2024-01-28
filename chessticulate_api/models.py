@@ -73,8 +73,8 @@ class Invitation(Base):  # pylint: disable=too-few-public-methods
         DateTime, server_default=func.now()  # pylint: disable=not-callable
     )
     date_answered: Mapped[str] = mapped_column(DateTime, nullable=True)
-    from_: Mapped[int] = mapped_column("from", ForeignKey("users.id_"), nullable=False)
-    to: Mapped[int] = mapped_column(ForeignKey("users.id_"), nullable=False)
+    from_id: Mapped[int] = mapped_column("from", ForeignKey("users.id_"), nullable=False)
+    to_id: Mapped[int] = mapped_column(ForeignKey("users.id_"), nullable=False)
     game_type: Mapped[str] = mapped_column(Enum(GameType), nullable=False)
     status: Mapped[str] = mapped_column(
         Enum(InvitationStatus), nullable=False, server_default=InvitationStatus.PENDING.value

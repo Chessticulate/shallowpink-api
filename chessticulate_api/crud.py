@@ -38,6 +38,9 @@ def _check_password(pswd: SecretStr, pswd_hash: str) -> bool:
         pswd.get_secret_value(), pswd_hash
     )
 
+def validate_token(token: str) -> dict:
+    """validate a JWT"""
+    return jwt.decode(token, CONFIG.secret, CONFIG.algorithm)
 
 async def get_user_by_name(name: str) -> models.User:
     """retrieve user from database by user name"""
@@ -87,18 +90,12 @@ async def login(name: str, pswd: SecretStr) -> str:
 
 
 async def create_invitation(
-    from_: str, to: str, game_type: str = models.GameType.CHESS.value
+    from_id: int, to_id: int, game_type: models.GameType = models.GameType.CHESS
 ) -> models.Invitation:
     """create a new invitation"""
-    from_user = await get_user_by_name(from_)
-    to_user = await get_user_by_name(to)
-    if from_user is None:
-        return None
-    if to_user is None:
-        return None
     async with async_session() as session:
         invitation = models.Invitation(
-            from_=from_user.id_, to=to_user.id_, game_type=game_type
+            from_id=from_id, to_id=to_id, game_type=game_type
         )
         session.add(invitation)
         await session.commit()
@@ -131,7 +128,9 @@ async def get_invitations(*, skip: int = 0, limit: int = 10, reverse: bool = Fal
         stmt = stmt.offset(skip).limit(limit)
         return [ row[0] for row in (await session.execute(stmt)).all() ]
 
+async def update_invitation(status: models.InvitationStatus, id_: int) -> models.Game | None
+    """respond to pending invitation"""
+    async with async_session() as session:
+       stmt = select(models.Invitation).where(models.Invitation.id_ == id_)
+       
 
-def validate_token(token: str) -> dict:
-    """validate a JWT"""
-    return jwt.decode(token, CONFIG.secret, CONFIG.algorithm)
