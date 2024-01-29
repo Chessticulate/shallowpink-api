@@ -63,22 +63,25 @@ async def create_invitation(
 @router.get("/invitations")
 async def get_invitations(
         credentials: Annotated[dict, Depends(get_credentials)], 
-        to_id: int,
-        from_id: int,
+        to_id: int | None = None,
+        from_id: int | None = None,
         invitation_id: int | None = None,
         status: str | None = None,
         skip: int | None = 10,
         limit: int | None = 1) -> schemas.GetInvitationResponse:
-
+    if not (to_id or from_id):
+        raise HTTPException(status_code=400, detail="'to_id' or 'from_id' must be supplied")
     if from_id != credentials["user_id"] and to_id != credentials["user_id"]
-        raise HTTPException(status_code=400, detail="requestor id must match either 'from_id' or 'to_id'")           
+        raise HTTPException(status_code=400, detail="'to_id' or 'from_id' must match the requestor's user ID")           
 
     args = {
-        "to_id": to_id,
-        "from_id": from_id,
         "skip": skip,
         "limit": limit
     }
+    if to_id:
+        args["to_id"] = to_id
+    if from_id:
+        args["from_id"] = from_id
     if invitation_id: 
         args["invitation_id"] = invitation_id
     if status:
