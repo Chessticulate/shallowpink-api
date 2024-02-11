@@ -44,8 +44,7 @@ async def get_user(
 ) -> schemas.GetUserResponse:
     if user_id:
         return dict(await crud.get_user_by_id(user_id))
-    if user_name:
-        return dict(await crud.get_user_by_name(user_name))
+    if user_name: return dict(await crud.get_user_by_name(user_name))
 
     raise HTTPException(
         status_code=400, detail="must provide either 'user_id' or 'user_name'"
@@ -93,5 +92,39 @@ async def get_invitations(
 
 
 @router.post("/invitations/{invitation_id}/accept")
-async def accept_invitation(credentials: Annotated[dict, Depends(get_credentials)], invitation_id: int) -> schemas.AcceptInvitationResponse
+async def accept_invitation(credentials: Annotated[dict, Depends(get_credentials)], invitation_id: int) -> schemas.AcceptInvitationResponse:
+    # check if user who SENT invitation still exists
+
+    invitation_list = get_invitations(id_ = invitation_id)
     
+    if not invitation_list:
+        raise HTTPException(status_code=404, detail=f"invitation with ID '{invitation_id}' does not exist")
+    invitation = invitation_list[0]
+    if credentials["user_id"] != invitation.to_id:
+        raise HTTPException(status_code=403, detail=f"invitation with ID '{invitation_id}' not addressed to user with ID '{credentials[\"user_id\"]'")
+
+    if invitation.status != model.InvitationStatus.PENDING:
+        raise HTTPException(status_code=400, detail=f"invitation with ID '{invitation_id}' already has '{invitation.status.value}' status")
+    
+    result = await crud.accept_invitation(invitation_id) 
+
+    return result.id_
+
+@router.post("/invitations/{invitation_id}/decline")
+async def decline_invitation(credentials: Annotated[dict, Depends(get_credentials)], invitation_id: int):
+    
+    invitation_list = get_invitations(id_ = invitation_id)
+ 
+    if not invitation_list:
+        raise HTTPException(status_code=404, detail=f"invitation with ID '{invitation_id}' does not exist")
+
+    invitation = invitation_list[0]
+    if credentials["user_id"] != invitation.to_id: 
+        raise HTTPException(status_code=403, detail=f"invitation with ID '{invitation_id}' not addressed to user with ID '{credentials[\"user_id\"]'")
+
+    if invitation.status != model.InvitationStatus.PENDING:
+        raise HTTPException(status_code=400, detail=f"invitation with ID '{invitation_id}' already has '{invitation.status.value}' status")
+
+    await crud.decline_invitation(invitation_id)
+    return dict[message: "ok"]
+

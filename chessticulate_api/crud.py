@@ -128,9 +128,21 @@ async def get_invitations(*, skip: int = 0, limit: int = 10, reverse: bool = Fal
         stmt = stmt.offset(skip).limit(limit)
         return [ row[0] for row in (await session.execute(stmt)).all() ]
 
-async def update_invitation(status: models.InvitationStatus, id_: int) -> models.Game | None
+async def accept_invitation(id_: int) -> models.Game
     """respond to pending invitation"""
     async with async_session() as session:
-       stmt = select(models.Invitation).where(models.Invitation.id_ == id_)
-       
-
+        stmt = update(models.Invitation).where(models.Invitation.id_ == id_).values(status = models.InvitationStatus.ACCEPTED)
+        await session.execute(stmt)
+        
+        #TODO 
+        # call to chess workers for initial game state
+        # add game row to Game table
+        # return new game id 
+        
+async def decline_invitation(id_: int):
+    """decline pending invitation"""
+    async with async_session() as session:
+        stmt = update(models.Invitation).where(models.Invitation.id_ == id_).values(status = models.InvitationStatus.DECLINED)
+        await session.execute(stmt)
+        await session.commit()
+      
