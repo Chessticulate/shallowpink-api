@@ -114,7 +114,7 @@ async def get_invitations(*, skip: int = 0, limit: int = 10, reverse: bool = Fal
         get_invitations(skip=0, limit=5, to=3, status='PENDING')
 
         # TODO: add 'since' and 'before' parameters
-    """
+    """ 
     async with async_session() as session:
         stmt = select(models.Invitation)
         for k, v in kwargs.items():
@@ -131,13 +131,14 @@ async def get_invitations(*, skip: int = 0, limit: int = 10, reverse: bool = Fal
 async def accept_invitation(id_: int) -> models.Game
     """respond to pending invitation"""
     async with async_session() as session:
-        stmt = update(models.Invitation).where(models.Invitation.id_ == id_).values(status = models.InvitationStatus.ACCEPTED)
-        await session.execute(stmt)
+        invitation = session.get(models.Invitation, id_)
+        invitation.status = models.InvitationStatus.ACCEPTED
+         
+        new_game = models.Game(player1=invitation.from_id, player2=invitation.to_id, whomst=invitation.from_id, invitation_id=id_)
+        session.add(new_game)
+        await session.commit()
+        return new_game.id_ 
         
-        #TODO 
-        # call to chess workers for initial game state
-        # add game row to Game table
-        # return new game id 
         
 async def decline_invitation(id_: int):
     """decline pending invitation"""

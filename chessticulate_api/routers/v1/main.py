@@ -95,7 +95,7 @@ async def get_invitations(
 async def accept_invitation(credentials: Annotated[dict, Depends(get_credentials)], invitation_id: int) -> schemas.AcceptInvitationResponse:
     # check if user who SENT invitation still exists
 
-    invitation_list = get_invitations(id_ = invitation_id)
+    invitation_list = crud.get_invitations(id_ = invitation_id)
     
     if not invitation_list:
         raise HTTPException(status_code=404, detail=f"invitation with ID '{invitation_id}' does not exist")
