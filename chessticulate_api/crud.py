@@ -20,9 +20,9 @@ import jwt
 from pydantic import SecretStr
 from sqlalchemy import select
 
+from chessticulate_api import models
 from chessticulate_api.config import CONFIG
 from chessticulate_api.db import async_session
-from chessticulate_api import models
 
 
 def _hash_password(pswd: SecretStr) -> str:
@@ -38,9 +38,11 @@ def _check_password(pswd: SecretStr, pswd_hash: str) -> bool:
         pswd.get_secret_value(), pswd_hash
     )
 
+
 def validate_token(token: str) -> dict:
     """validate a JWT"""
     return jwt.decode(token, CONFIG.secret, CONFIG.algorithm)
+
 
 async def get_user_by_name(name: str) -> models.User:
     """retrieve user from database by user name"""
@@ -70,6 +72,17 @@ async def create_user(name: str, email: str, pswd: SecretStr) -> models.User:
         await session.commit()
         await session.refresh(user)
         return user
+
+
+async def delete_user(id_: int):
+    """delete existing user"""
+    user = await get_user_by_id(id_)
+    if user is None:
+        return None
+    async with async_session() as session:
+        await session.delete(user)
+        await session.commit()
+    return user
 
 
 async def login(name: str, pswd: SecretStr) -> str:
@@ -103,9 +116,11 @@ async def create_invitation(
         return invitation
 
 
-async def get_invitations(*, skip: int = 0, limit: int = 10, reverse: bool = False, **kwargs) -> list[models.Invitation]:
+async def get_invitations(
+    *, skip: int = 0, limit: int = 10, reverse: bool = False, **kwargs
+) -> list[models.Invitation]:
     """retrieve invitations from DB
-    
+
     Examples:
         # get invitation by ID
         get_invitations(id_=10)
@@ -114,7 +129,7 @@ async def get_invitations(*, skip: int = 0, limit: int = 10, reverse: bool = Fal
         get_invitations(skip=0, limit=5, to=3, status='PENDING')
 
         # TODO: add 'since' and 'before' parameters
-    """ 
+    """
     async with async_session() as session:
         stmt = select(models.Invitation)
         for k, v in kwargs.items():
@@ -126,24 +141,33 @@ async def get_invitations(*, skip: int = 0, limit: int = 10, reverse: bool = Fal
             stmt = stmt.order_by(models.Invitation.date_sent.asc())
 
         stmt = stmt.offset(skip).limit(limit)
-        return [ row[0] for row in (await session.execute(stmt)).all() ]
+        return [row[0] for row in (await session.execute(stmt)).all()]
 
-async def accept_invitation(id_: int) -> models.Game
+
+async def accept_invitation(id_: int) -> models.Game:
     """respond to pending invitation"""
     async with async_session() as session:
         invitation = session.get(models.Invitation, id_)
         invitation.status = models.InvitationStatus.ACCEPTED
-         
-        new_game = models.Game(player1=invitation.from_id, player2=invitation.to_id, whomst=invitation.from_id, invitation_id=id_)
+
+        new_game = models.Game(
+            player1=invitation.from_id,
+            player2=invitation.to_id,
+            whomst=invitation.from_id,
+            invitation_id=id_,
+        )
         session.add(new_game)
         await session.commit()
-        return new_game.id_ 
-        
-        
+        return new_game.id_
+
+
 async def decline_invitation(id_: int):
     """decline pending invitation"""
     async with async_session() as session:
-        stmt = update(models.Invitation).where(models.Invitation.id_ == id_).values(status = models.InvitationStatus.DECLINED)
+        stmt = (
+            update(models.Invitation)
+            .where(models.Invitation.id_ == id_)
+            .values(status=models.InvitationStatus.DECLINED)
+        )
         await session.execute(stmt)
         await session.commit()
-      

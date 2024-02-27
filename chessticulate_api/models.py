@@ -73,11 +73,15 @@ class Invitation(Base):  # pylint: disable=too-few-public-methods
         DateTime, server_default=func.now()  # pylint: disable=not-callable
     )
     date_answered: Mapped[str] = mapped_column(DateTime, nullable=True)
-    from_id: Mapped[int] = mapped_column("from", ForeignKey("users.id_"), nullable=False)
+    from_id: Mapped[int] = mapped_column(
+        "from", ForeignKey("users.id_"), nullable=False
+    )
     to_id: Mapped[int] = mapped_column(ForeignKey("users.id_"), nullable=False)
     game_type: Mapped[str] = mapped_column(Enum(GameType), nullable=False)
     status: Mapped[str] = mapped_column(
-        Enum(InvitationStatus), nullable=False, server_default=InvitationStatus.PENDING.value
+        Enum(InvitationStatus),
+        nullable=False,
+        server_default=InvitationStatus.PENDING.value,
     )
 
 
@@ -87,17 +91,28 @@ class Game(Base):  # pylint: disable=too-few-public-methods
     __tablename__ = "games"
 
     id_: Mapped[int] = mapped_column(primary_key=True)
-    game_type: Mapped[str] = mapped_column(Enum(GameType), nullable=False, server_default=GameType.CHESS)
+    game_type: Mapped[str] = mapped_column(
+        Enum(GameType), nullable=False, server_default=GameType.CHESS.value
+    )
     date_started: Mapped[str] = mapped_column(
         DateTime, server_default=func.utc_timestamp(), nullable=True
     )
-    invitation_id: Mapped[int] = mapped_column(ForeignKey("invitation.id_"), nullable=False)
+    invitation_id: Mapped[int] = mapped_column(
+        ForeignKey("invitations.id_"), nullable=False
+    )
     date_ended: Mapped[str] = mapped_column(DateTime, nullable=True)
     player_1: Mapped[int] = mapped_column(ForeignKey("users.id_"), nullable=False)
     player_2: Mapped[int] = mapped_column(ForeignKey("users.id_"), nullable=False)
-    whomst: Mapped[int] = mapped_column(ForeignKey("user.id_"), nullable=False)    
+    whomst: Mapped[int] = mapped_column(ForeignKey("users.id_"), nullable=False)
     winner: Mapped[int] = mapped_column(ForeignKey("users.id_"), nullable=True)
-    state: Mapped[str] = mapped_column(String, nullable=False, server_default="{ \"fen\": \"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1\", \"states\": {}}")
+    state: Mapped[str] = mapped_column(
+        String,
+        nullable=False,
+        server_default=(
+            '{ "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",'
+            ' "states": {}}'
+        ),
+    )
 
 
 async def init_db():

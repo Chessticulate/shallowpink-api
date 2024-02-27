@@ -46,7 +46,7 @@ class CreateInvitationResponse(BaseModel):
 
 class GetInvitationResponse(BaseModel):
     """pydantic model for get invitation response"""
-     
+
     id_: int = Field(..., alias="id")
     date_sent: str
     date_answered: str
@@ -116,7 +116,8 @@ class GetUserResponse(BaseModel):
     draws: int
     losses: int
 
+
 class AcceptInvitationResponse(BaseModel):
     """Pydantic model for accepting game invitation"""
-    
-   game_id: int  
+
+    game_id: int

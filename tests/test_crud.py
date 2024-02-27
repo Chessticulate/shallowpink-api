@@ -68,6 +68,19 @@ async def test_create_user(drop_all_users):
 
 
 @pytest.mark.asyncio
+async def test_delete_user(init_fake_user_data):
+
+    # assume user id = 1
+    active_user = await crud.get_user_by_name("fakeuser1")
+    id_ = 1
+    assert active_user is not None
+
+    await crud.delete_user(id_)
+    deleted_user = await crud.get_user_by_name("fakeuser1")
+    assert deleted_user is None
+
+
+@pytest.mark.asyncio
 async def test_login_validate_token(init_fake_user_data):
     # test expired token
 
@@ -98,7 +111,7 @@ async def test_create_invitation(init_fake_user_data):
     user_2 = await crud.get_user_by_name("fakeuser2")
 
     invitation = await crud.create_invitation(user_1.id_, user_2.id_)
-   
+
     assert invitation.status.value is models.InvitationStatus.PENDING.value
     assert (await crud.get_user_by_id(invitation.from_id)).name == "fakeuser1"
     assert (await crud.get_user_by_id(invitation.to_id)).name == "fakeuser2"
