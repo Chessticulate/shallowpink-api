@@ -11,6 +11,10 @@ router = APIRouter()
 
 security = HTTPBearer()
 
+# TODO
+# delete user, delete invitation
+# logout?
+
 
 def get_credentials(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]
@@ -52,12 +56,36 @@ async def get_user(
     )
 
 
+# WIP
+@router.delete("/user/delete")
+async def delete_user(
+    credentials: Annotated[dict, Depends(get_credentials)]
+) -> schemas.DeleteUserResponse:
+    user_id = credentials["user_id"]
+    deleted_user = await crud.delete_user(user_id)
+    if deleted_user is not None:
+        # {"message": "User with ID '{credentials['user_id']}' deleted successfully"}
+        return deleted_user
+    else:
+        raise HTTPException(
+            status_code=404, detail=f"User with ID '{credentials['user_id']}' not found"
+        )
+
+
 @router.post("/invitation")
 async def create_invitation(
     credentials: Annotated[dict, Depends(get_credentials)],
     payload: schemas.CreateInvitationRequest,
 ) -> schemas.CreateInvitationResponse:
     return dict(await crud.create_invitation(credentials["user_id"], payload.to))
+
+
+# delete_invitation wip
+@router.delete("/invitations/{invitation_id}")
+async def delete_invitation(
+    credentials: Annotated[dict, Depends(get_credentials)], id_
+) -> schemas.DeleteInvitationResponse:
+    return dict(await crud.delete_invitation(id_, credentials["user_id"]))
 
 
 @router.get("/invitations")

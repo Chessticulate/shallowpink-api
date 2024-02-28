@@ -74,6 +74,7 @@ async def create_user(name: str, email: str, pswd: SecretStr) -> models.User:
         return user
 
 
+# WIP need to check if user is logged in so that they have permission to delete account
 async def delete_user(id_: int):
     """delete existing user"""
     user = await get_user_by_id(id_)
@@ -82,7 +83,7 @@ async def delete_user(id_: int):
     async with async_session() as session:
         await session.delete(user)
         await session.commit()
-    return user
+        return user
 
 
 async def login(name: str, pswd: SecretStr) -> str:
@@ -113,6 +114,21 @@ async def create_invitation(
         session.add(invitation)
         await session.commit()
         await session.refresh(invitation)
+        return invitation
+
+
+# invitation deletable only by user who sent it
+async def delete_invitation(id_: int, from_id: int) -> models.Invitation:
+    invitation = await get_invitations(id_)
+    if invitation is None:
+        return None
+
+    if invitation.from_id != from_id:
+        return None
+
+    async with async_session() as session:
+        await session.delete(invitation)
+        await session.commit()
         return invitation
 
 

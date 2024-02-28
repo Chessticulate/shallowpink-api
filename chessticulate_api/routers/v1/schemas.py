@@ -44,6 +44,18 @@ class CreateInvitationResponse(BaseModel):
     response: str
 
 
+class DeleteInvitationResponse(BaseModel):
+    """pydantic model for delete invite response"""
+
+    id_: int = Field(..., alias="id")
+    date_sent: str
+    date_answered: str
+    from_: int
+    to: int
+    game_type: str
+    response: str
+
+
 class GetInvitationResponse(BaseModel):
     """pydantic model for get invitation response"""
 
@@ -63,6 +75,18 @@ class LoginResponse(BaseModel):
 
 
 class CreateUserResponse(BaseModel):
+    """Pydantic model for user creation responses."""
+
+    id_: int = Field(..., alias="id")
+    name: str
+    email: str
+    date_joined: str
+    wins: int
+    draws: int
+    losses: int
+
+
+class DeleteUserResponse(BaseModel):
     """Pydantic model for user creation responses."""
 
     id_: int = Field(..., alias="id")
