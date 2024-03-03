@@ -117,6 +117,12 @@ async def test_create_invitation(init_fake_user_data):
     assert (await crud.get_user_by_id(invitation.to_id)).name == "fakeuser2"
     assert invitation.game_type.value is models.GameType.CHESS.value
 
+    invitation2 = await crud.create_invitation(user_1.id_, 40)
+
+
+@pytest.mark.asyncio
+async def test_delete_invitation(init_fake_user_data):
+    assert False
 
 @pytest.mark.asyncio
 async def test_get_invitations(init_fake_user_data):
@@ -133,3 +139,11 @@ async def test_get_invitations(init_fake_user_data):
     assert result[0].to_id == invitation.to_id
     assert result[0].game_type.value == invitation.game_type.value
     assert result[0].status.value == invitation.status.value
+
+@pytest.mark.asyncio
+async def test_accept_invitation(init_fake_user_data):
+    assert False
+
+@pytest.mark.asyncio
+async def test_decline_invitation(init_fake_user_data):
+    assert False

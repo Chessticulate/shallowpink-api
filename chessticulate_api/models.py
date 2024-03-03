@@ -50,8 +50,8 @@ class User(Base):  # pylint: disable=too-few-public-methods
 
     id_: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    password: Mapped[str] = mapped_column(String, nullable=False)
-    email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    password: Mapped[str] = mapped_column(String, nullable=True)
+    email: Mapped[str] = mapped_column(String, unique=True, nullable=True)
     deleted: Mapped[bool] = mapped_column(Boolean, server_default="FALSE")
     date_joined: Mapped[str] = mapped_column(
         DateTime,

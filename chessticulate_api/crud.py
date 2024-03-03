@@ -77,13 +77,15 @@ async def create_user(name: str, email: str, pswd: SecretStr) -> models.User:
 # WIP need to check if user is logged in so that they have permission to delete account
 async def delete_user(id_: int):
     """delete existing user"""
-    user = await get_user_by_id(id_)
-    if user is None:
-        return None
     async with async_session() as session:
-        await session.delete(user)
+        
+        stmt = (
+            update(models.User)
+            .where(models.User.id_ == id_)
+            .values(password=None, email=None, deleted=True)
+        )
+        await session.execute(stmt)
         await session.commit()
-        return user
 
 
 async def login(name: str, pswd: SecretStr) -> str:

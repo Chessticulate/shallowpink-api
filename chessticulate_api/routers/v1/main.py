@@ -16,7 +16,7 @@ security = HTTPBearer()
 # logout?
 
 
-def get_credentials(
+async def get_credentials(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]
 ) -> dict:
     try:
@@ -25,12 +25,16 @@ def get_credentials(
         raise HTTPException(status_code=401, detail="invalid token")
     except jwt.exceptions.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="expired token")
+    if not (user := crud.get_user_by_id(decoded_token["user_id"])):
+        raise HTTPException(status_code=401, detail="user has been deleted") 
     return decoded_token
 
 
 @router.post("/login")
-async def login(name: str, pswd: str) -> schemas.LoginResponse:
-    return await crud.login(name, pswd)
+async def login(payload: schemas.LoginRequest) -> schemas.LoginResponse:
+    if not (token := await crud.login(payload.name, payload.password)):
+        raise HTTPException(status_code=401, detail="invalid credentials")
+    return {"jwt": token}
 
 
 @router.post("/signup")
@@ -77,7 +81,9 @@ async def create_invitation(
     credentials: Annotated[dict, Depends(get_credentials)],
     payload: schemas.CreateInvitationRequest,
 ) -> schemas.CreateInvitationResponse:
-    return dict(await crud.create_invitation(credentials["user_id"], payload.to))
+    if not crud.get_user_by_id(payload.to_id):
+        raise HTTPException(status_code=400, detail="addressee does not exist")
+    return dict(await crud.create_invitation(credentials["user_id"], payload.to_id))
 
 
 # delete_invitation wip
