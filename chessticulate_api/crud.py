@@ -18,8 +18,7 @@ from datetime import datetime, timedelta, timezone
 import bcrypt
 import jwt
 from pydantic import SecretStr
-from sqlalchemy import select
-
+from sqlalchemy import select, update
 from chessticulate_api import models
 from chessticulate_api.config import CONFIG
 from chessticulate_api.db import async_session
@@ -86,6 +85,7 @@ async def delete_user(id_: int):
         )
         await session.execute(stmt)
         await session.commit()
+        return True
 
 
 async def login(name: str, pswd: SecretStr) -> str:
@@ -121,17 +121,16 @@ async def create_invitation(
 
 # invitation deletable only by user who sent it
 async def delete_invitation(id_: int, from_id: int) -> models.Invitation:
-    invitation = await get_invitations(id_)
-    if invitation is None:
-        return None
-
-    if invitation.from_id != from_id:
-        return None
-
+    """delete invitation"""
     async with async_session() as session:
-        await session.delete(invitation)
+        stmt = (
+            update(models.Invitation)
+            .where(models.Invitation.id_ == id_, models.Invitation.from_id == from_id)
+            .values(deleted=True)
+        )
+        result = await session.execute(stmt)
         await session.commit()
-        return invitation
+        return result.rowcount > 0
 
 
 async def get_invitations(

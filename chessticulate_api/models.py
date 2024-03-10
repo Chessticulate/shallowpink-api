@@ -16,7 +16,7 @@ Functions:
 
 import enum
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, func
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, func, sql
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from chessticulate_api.db import async_engine
@@ -52,7 +52,7 @@ class User(Base):  # pylint: disable=too-few-public-methods
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     password: Mapped[str] = mapped_column(String, nullable=True)
     email: Mapped[str] = mapped_column(String, unique=True, nullable=True)
-    deleted: Mapped[bool] = mapped_column(Boolean, server_default="FALSE")
+    deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=sql.false())
     date_joined: Mapped[str] = mapped_column(
         DateTime,
         server_default=func.now(),  # pylint: disable=not-callable
@@ -77,6 +77,7 @@ class Invitation(Base):  # pylint: disable=too-few-public-methods
         "from", ForeignKey("users.id_"), nullable=False
     )
     to_id: Mapped[int] = mapped_column(ForeignKey("users.id_"), nullable=False)
+    deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=sql.false())
     game_type: Mapped[str] = mapped_column(Enum(GameType), nullable=False)
     status: Mapped[str] = mapped_column(
         Enum(InvitationStatus),

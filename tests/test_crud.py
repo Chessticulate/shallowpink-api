@@ -74,11 +74,13 @@ async def test_delete_user(init_fake_user_data):
     active_user = await crud.get_user_by_name("fakeuser1")
     id_ = 1
     assert active_user is not None
+    assert active_user.deleted == False
 
     await crud.delete_user(id_)
     deleted_user = await crud.get_user_by_name("fakeuser1")
-    assert deleted_user is None
-
+    assert deleted_user.deleted == True
+    assert deleted_user.email == None
+    assert deleted_user.password == None
 
 @pytest.mark.asyncio
 async def test_login_validate_token(init_fake_user_data):
@@ -122,7 +124,16 @@ async def test_create_invitation(init_fake_user_data):
 
 @pytest.mark.asyncio
 async def test_delete_invitation(init_fake_user_data):
-    assert False
+    user_1 = await crud.get_user_by_name("fakeuser1")
+    user_2 = await crud.get_user_by_name("fakeuser2")
+
+    invitation = await crud.create_invitation(user_1.id_, user_2.id_)
+
+    # deleteing invitation as user who recieved it is not allowed
+    assert await crud.delete_invitation(invitation.id_, user_2.id_) is False 
+
+    assert await crud.delete_invitation(invitation.id_, user_1.id_) is True
+    
 
 @pytest.mark.asyncio
 async def test_get_invitations(init_fake_user_data):
