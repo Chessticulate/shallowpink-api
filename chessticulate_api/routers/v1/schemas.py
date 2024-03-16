@@ -67,10 +67,13 @@ class GetInvitationResponse(BaseModel):
     game_type: str
     response: str
 
+
 class LoginRequest(BaseModel):
     """pydantic Model fro Login Requests"""
+
     name: str
     password: SecretStr
+
 
 class LoginResponse(BaseModel):
     """Pydantic model for login responses."""

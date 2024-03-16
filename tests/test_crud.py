@@ -82,6 +82,7 @@ async def test_delete_user(init_fake_user_data):
     assert deleted_user.email == None
     assert deleted_user.password == None
 
+
 @pytest.mark.asyncio
 async def test_login_validate_token(init_fake_user_data):
     # test expired token
@@ -130,10 +131,10 @@ async def test_delete_invitation(init_fake_user_data):
     invitation = await crud.create_invitation(user_1.id_, user_2.id_)
 
     # deleteing invitation as user who recieved it is not allowed
-    assert await crud.delete_invitation(invitation.id_, user_2.id_) is False 
+    assert await crud.delete_invitation(invitation.id_, user_2.id_) is False
 
     assert await crud.delete_invitation(invitation.id_, user_1.id_) is True
-    
+
 
 @pytest.mark.asyncio
 async def test_get_invitations(init_fake_user_data):
@@ -151,10 +152,53 @@ async def test_get_invitations(init_fake_user_data):
     assert result[0].game_type.value == invitation.game_type.value
     assert result[0].status.value == invitation.status.value
 
+
 @pytest.mark.asyncio
 async def test_accept_invitation(init_fake_user_data):
-    assert False
+
+    # Additional things to test
+    # accept/decline invitation should not be able to alter the status
+    # of a non pending invitation
+
+    # create an invitation
+    user_1 = await crud.get_user_by_name("fakeuser1")
+    user_2 = await crud.get_user_by_name("fakeuser2")
+
+    invitation = await crud.create_invitation(user_1.id_, user_2.id_)
+
+    # accept invitation
+    id_ = await crud.accept_invitation(invitation.id_)
+
+    # check if invitation.status = Accepted
+    result = await crud.get_invitations(id_=invitation.id_)
+    assert result[0].status.value is models.InvitationStatus.ACCEPTED.value
+
 
 @pytest.mark.asyncio
 async def test_decline_invitation(init_fake_user_data):
-    assert False
+    user_1 = await crud.get_user_by_name("fakeuser1")
+    user_2 = await crud.get_user_by_name("fakeuser2")
+
+    invitation = await crud.create_invitation(user_1.id_, user_2.id_)
+
+    id_ = await crud.decline_invitation(invitation.id_)
+
+    result = await crud.get_invitations(id_=invitation.id_)
+    assert result[0].status.value is models.InvitationStatus.DECLINED.value
+
+
+@pytest.mark.asyncio
+async def test_get_game(init_fake_game_data, fake_game_data):
+
+    # assume no user has an id 666
+    assert await crud.get_game(666) is None
+
+    id_ = 1
+    for data in fake_game_data:
+        game = await crud.get_game(id_)
+        print(game.player_1)
+        print(game.invitation_id)
+        id_ += 1
+        assert game.player_1 == int(data["player_1"])
+        assert game.player_2 == int(data["player_2"])
+        assert game.whomst == int(data["whomst"])

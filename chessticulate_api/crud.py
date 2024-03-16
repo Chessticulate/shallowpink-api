@@ -19,6 +19,7 @@ import bcrypt
 import jwt
 from pydantic import SecretStr
 from sqlalchemy import select, update
+
 from chessticulate_api import models
 from chessticulate_api.config import CONFIG
 from chessticulate_api.db import async_session
@@ -77,7 +78,7 @@ async def create_user(name: str, email: str, pswd: SecretStr) -> models.User:
 async def delete_user(id_: int):
     """delete existing user"""
     async with async_session() as session:
-        
+
         stmt = (
             update(models.User)
             .where(models.User.id_ == id_)
@@ -164,12 +165,12 @@ async def get_invitations(
 async def accept_invitation(id_: int) -> models.Game:
     """respond to pending invitation"""
     async with async_session() as session:
-        invitation = session.get(models.Invitation, id_)
+        invitation = await session.get(models.Invitation, id_)
         invitation.status = models.InvitationStatus.ACCEPTED
 
         new_game = models.Game(
-            player1=invitation.from_id,
-            player2=invitation.to_id,
+            player_1=invitation.from_id,
+            player_2=invitation.to_id,
             whomst=invitation.from_id,
             invitation_id=id_,
         )
@@ -188,3 +189,13 @@ async def decline_invitation(id_: int):
         )
         await session.execute(stmt)
         await session.commit()
+
+
+async def get_game(id_: int) -> models.Game:
+    """retrieve game from database using game id"""
+
+    async with async_session() as session:
+        stmt = select(models.Game).where(models.Game.id_ == id_)
+
+        row = (await session.execute(stmt)).first()
+        return row if row is None else row[0]

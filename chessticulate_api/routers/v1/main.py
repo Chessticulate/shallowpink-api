@@ -26,7 +26,7 @@ async def get_credentials(
     except jwt.exceptions.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="expired token")
     if not (user := crud.get_user_by_id(decoded_token["user_id"])):
-        raise HTTPException(status_code=401, detail="user has been deleted") 
+        raise HTTPException(status_code=401, detail="user has been deleted")
     return decoded_token
 
 
