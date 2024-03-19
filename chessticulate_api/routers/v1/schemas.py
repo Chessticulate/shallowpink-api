@@ -84,13 +84,9 @@ class LoginResponse(BaseModel):
 class CreateUserResponse(BaseModel):
     """Pydantic model for user creation responses."""
 
-    id_: int = Field(..., alias="id")
     name: str
     email: str
-    date_joined: str
-    wins: int
-    draws: int
-    losses: int
+    password: str
 
 
 class DeleteUserResponse(BaseModel):

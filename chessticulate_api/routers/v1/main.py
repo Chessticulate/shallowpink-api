@@ -3,6 +3,7 @@ from typing import Annotated
 import jwt
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security.http import HTTPAuthorizationCredentials, HTTPBearer
+from pydantic import SecretStr
 
 from chessticulate_api import crud
 from chessticulate_api.routers.v1 import schemas
@@ -39,9 +40,16 @@ async def login(payload: schemas.LoginRequest) -> schemas.LoginResponse:
 
 @router.post("/signup")
 async def signup(payload: schemas.CreateUserRequest) -> schemas.CreateUserResponse:
-    return dict(
-        await crud.create_user(payload.name, payload.email, SecretStr(payload.password))
+    # this if statement is not properly handling bad credentials
+    if not (
+        user := await crud.create_user(payload.name, payload.email, payload.password)
+    ):
+        raise HTTPException(status_code=401, detail="invalid credentials")
+
+    response_data = schemas.CreateUserResponse(
+        name=user.name, email=user.email, password=user.password
     )
+    return dict(response_data)
 
 
 @router.get("/user")
