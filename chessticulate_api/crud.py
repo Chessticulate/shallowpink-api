@@ -47,7 +47,7 @@ def validate_token(token: str) -> dict:
 async def get_user_by_name(name: str) -> models.User:
     """retrieve user from database by user name"""
     async with async_session() as session:
-        stmt = select(models.User).where(models.User.name == name)
+        stmt = select(models.User).where(models.User.name == name, models.User.deleted == False)
 
         row = (await session.execute(stmt)).first()
         return row if row is None else row[0]
@@ -56,13 +56,12 @@ async def get_user_by_name(name: str) -> models.User:
 async def get_user_by_id(id_: int) -> models.User:
     """retrieve user from database by user ID"""
     async with async_session() as session:
-        stmt = select(models.User).where(models.User.id_ == id_)
+        stmt = select(models.User).where(models.User.id_ == id_, models.User.deleted == False)
 
         row = (await session.execute(stmt)).first()
         return row if row is None else row[0]
 
 
-# create_user name should use pydantic SecretStr
 async def create_user(name: str, email: str, pswd: SecretStr) -> models.User:
     """create a new user"""
     hashed_pswd = _hash_password(pswd)
@@ -74,19 +73,17 @@ async def create_user(name: str, email: str, pswd: SecretStr) -> models.User:
         return user
 
 
-# WIP need to check if user is logged in so that they have permission to delete account
 async def delete_user(id_: int):
     """delete existing user"""
     async with async_session() as session:
-
         stmt = (
             update(models.User)
-            .where(models.User.id_ == id_)
+            .where(models.User.id_ == id_, models.User.deleted == False)
             .values(password=None, email=None, deleted=True)
         )
-        await session.execute(stmt)
+        result = await session.execute(stmt)
         await session.commit()
-        return True
+        return result.rowcount == 1
 
 
 async def login(name: str, pswd: SecretStr) -> str:
@@ -120,18 +117,20 @@ async def create_invitation(
         return invitation
 
 
-# invitation deletable only by user who sent it
 async def delete_invitation(id_: int, from_id: int) -> models.Invitation:
     """delete invitation"""
     async with async_session() as session:
         stmt = (
             update(models.Invitation)
-            .where(models.Invitation.id_ == id_, models.Invitation.from_id == from_id)
-            .values(deleted=True)
+            .where(
+                models.Invitation.id_ == id_,
+                models.Invitation.from_id == from_id,
+                models.Invitation.deleted == False
+            ).values(deleted=True)
         )
         result = await session.execute(stmt)
         await session.commit()
-        return result.rowcount > 0
+        return result.rowcount == 1
 
 
 async def get_invitations(

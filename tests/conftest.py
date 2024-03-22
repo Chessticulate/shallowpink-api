@@ -1,7 +1,7 @@
 import pytest
 import pytest_asyncio
 from pydantic import SecretStr
-from sqlalchemy import delete
+from sqlalchemy import delete, text
 from sqlalchemy.orm import Session
 
 from chessticulate_api import config, crud, db, models
@@ -12,11 +12,10 @@ def fake_app_secret():
     config.CONFIG.secret = "fake_secret"
 
 
-@pytest_asyncio.fixture
-async def drop_all_users():
+@pytest_asyncio.fixture(scope="session", autouse=True)
+async def sqlite_enforce_foreign_keys():
     async with db.async_session() as session:
-        stmt = delete(models.User)
-        await session.execute(stmt)
+        await session.execute(text("PRAGMA foreign_keys = ON;"))
         await session.commit()
 
 
@@ -78,11 +77,12 @@ def fake_game_data():
 
 
 @pytest_asyncio.fixture
-async def init_fake_user_data(fake_user_data, drop_all_users, fake_app_secret):
+async def init_fake_user_data(fake_user_data, drop_all_data, fake_app_secret):
     async with db.async_session() as session:
         for data in fake_user_data:
-            pswd = crud._hash_password(SecretStr(data.pop("password")))
-            user = models.User(**data, password=pswd)
+            data_copy = data.copy()
+            pswd = crud._hash_password(SecretStr(data_copy.pop("password")))
+            user = models.User(**data_copy, password=pswd)
             session.add(user)
         await session.commit()
 
