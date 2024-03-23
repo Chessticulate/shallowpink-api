@@ -16,10 +16,10 @@ Functions:
 
 import enum
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, func, sql
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, func, sql, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-from chessticulate_api.db import async_engine
+from chessticulate_api import db
 
 
 class Base(DeclarativeBase):  # pylint: disable=too-few-public-methods
@@ -41,6 +41,7 @@ class InvitationStatus(enum.Enum):
     ACCEPTED = "ACCEPTED"
     DECLINED = "DECLINED"
     PENDING = "PENDING"
+    CANCELLED = "CANCELLED"
 
 
 class User(Base):  # pylint: disable=too-few-public-methods
@@ -48,7 +49,7 @@ class User(Base):  # pylint: disable=too-few-public-methods
 
     __tablename__ = "users"
 
-    id_: Mapped[int] = mapped_column(primary_key=True)
+    id_: Mapped[int] = mapped_column("id", primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     password: Mapped[str] = mapped_column(String, nullable=True)
     email: Mapped[str] = mapped_column(String, unique=True, nullable=True)
@@ -70,18 +71,13 @@ class Invitation(Base):  # pylint: disable=too-few-public-methods
 
     __tablename__ = "invitations"
 
-    id_: Mapped[int] = mapped_column(primary_key=True)
+    id_: Mapped[int] = mapped_column("id", primary_key=True)
     date_sent: Mapped[str] = mapped_column(
         DateTime, server_default=func.now()  # pylint: disable=not-callable
     )
     date_answered: Mapped[str] = mapped_column(DateTime, nullable=True)
-    from_id: Mapped[int] = mapped_column(
-        "from", ForeignKey("users.id_"), nullable=False
-    )
-    to_id: Mapped[int] = mapped_column(ForeignKey("users.id_"), nullable=False)
-    deleted: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, server_default=sql.false()
-    )
+    from_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    to_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     game_type: Mapped[str] = mapped_column(Enum(GameType), nullable=False)
     status: Mapped[str] = mapped_column(
         Enum(InvitationStatus),
@@ -95,7 +91,7 @@ class Game(Base):  # pylint: disable=too-few-public-methods
 
     __tablename__ = "games"
 
-    id_: Mapped[int] = mapped_column(primary_key=True)
+    id_: Mapped[int] = mapped_column("id", primary_key=True)
     game_type: Mapped[str] = mapped_column(
         Enum(GameType), nullable=False, server_default=GameType.CHESS.value
     )
@@ -103,13 +99,13 @@ class Game(Base):  # pylint: disable=too-few-public-methods
         DateTime, server_default=func.now(), nullable=True
     )
     invitation_id: Mapped[int] = mapped_column(
-        ForeignKey("invitations.id_"), nullable=False
+        ForeignKey("invitations.id"), nullable=False
     )
     date_ended: Mapped[str] = mapped_column(DateTime, nullable=True)
-    player_1: Mapped[int] = mapped_column(ForeignKey("users.id_"), nullable=False)
-    player_2: Mapped[int] = mapped_column(ForeignKey("users.id_"), nullable=False)
-    whomst: Mapped[int] = mapped_column(ForeignKey("users.id_"), nullable=False)
-    winner: Mapped[int] = mapped_column(ForeignKey("users.id_"), nullable=True)
+    player_1: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    player_2: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    whomst: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    winner: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=True)
     state: Mapped[str] = mapped_column(
         String,
         nullable=False,
@@ -122,5 +118,5 @@ class Game(Base):  # pylint: disable=too-few-public-methods
 
 async def init_db():
     """Submit DDL to database"""
-    async with async_engine.begin() as conn:
+    async with db.async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

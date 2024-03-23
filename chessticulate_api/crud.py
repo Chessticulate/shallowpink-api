@@ -18,7 +18,7 @@ from datetime import datetime, timedelta, timezone
 import bcrypt
 import jwt
 from pydantic import SecretStr
-from sqlalchemy import select, update
+from sqlalchemy import select, update, exc
 
 from chessticulate_api import models
 from chessticulate_api.config import CONFIG
@@ -26,26 +26,26 @@ from chessticulate_api.db import async_session
 
 
 def _hash_password(pswd: SecretStr) -> str:
-    """hash password using bcrypt"""
+    """Hash password using bcrypt."""
     return bcrypt.hashpw(  # pylint: disable=no-member
         pswd.get_secret_value(), bcrypt.gensalt()
     )
 
 
 def _check_password(pswd: SecretStr, pswd_hash: str) -> bool:
-    """compare password with password hash using bcrypt"""
+    """Compare password with password hash using bcrypt."""
     return bcrypt.checkpw(  # pylint: disable=no-member
         pswd.get_secret_value(), pswd_hash
     )
 
 
 def validate_token(token: str) -> dict:
-    """validate a JWT"""
+    """Validate a JWT."""
     return jwt.decode(token, CONFIG.secret, CONFIG.algorithm)
 
 
-async def get_user_by_name(name: str) -> models.User:
-    """retrieve user from database by user name"""
+async def get_user_by_name(name: str) -> models.User | None:
+    """Retrieve user from database by user name."""
     async with async_session() as session:
         stmt = select(models.User).where(models.User.name == name, models.User.deleted == False)
 
@@ -53,8 +53,8 @@ async def get_user_by_name(name: str) -> models.User:
         return row if row is None else row[0]
 
 
-async def get_user_by_id(id_: int) -> models.User:
-    """retrieve user from database by user ID"""
+async def get_user_by_id(id_: int) -> models.User | None:
+    """Retrieve user from database by user ID."""
     async with async_session() as session:
         stmt = select(models.User).where(models.User.id_ == id_, models.User.deleted == False)
 
@@ -63,7 +63,11 @@ async def get_user_by_id(id_: int) -> models.User:
 
 
 async def create_user(name: str, email: str, pswd: SecretStr) -> models.User:
-    """create a new user"""
+    """
+    Create a new user.
+
+    Raises a sqlalchemy.exc.IntegrityError if either name or email is already present.
+    """
     hashed_pswd = _hash_password(pswd)
     async with async_session() as session:
         user = models.User(name=name, email=email, password=hashed_pswd)
@@ -73,8 +77,15 @@ async def create_user(name: str, email: str, pswd: SecretStr) -> models.User:
         return user
 
 
-async def delete_user(id_: int):
-    """delete existing user"""
+async def delete_user(id_: int) -> bool:
+    """
+    Delete existing user.
+
+    Returns True if user succesfully deleted, False if user
+    does not exist or is already deleted. The user row is
+    not actually deleted from the users table, but is only
+    marked "deleted", and it's email and password removed.
+    """
     async with async_session() as session:
         stmt = (
             update(models.User)
@@ -86,8 +97,13 @@ async def delete_user(id_: int):
         return result.rowcount == 1
 
 
-async def login(name: str, pswd: SecretStr) -> str:
-    """validate user name and password, return a JWT"""
+async def login(name: str, pswd: SecretStr) -> str | None:
+    """
+    Validate user name and password.
+
+    Returns None if bad login fails.
+    Returns JWT in the form of a str on success.
+    """
     user = await get_user_by_name(name)
     if user is None:
         return None
@@ -106,7 +122,13 @@ async def login(name: str, pswd: SecretStr) -> str:
 async def create_invitation(
     from_id: int, to_id: int, game_type: models.GameType = models.GameType.CHESS
 ) -> models.Invitation:
-    """create a new invitation"""
+    """
+    Create a new invitation.
+
+    Raises a sqlalchemy.exc.IntegrityError if from_id or to_id do not exist.
+    Does not check if the from_id or to_id have been marked deleted, that will
+    have to be done separately.
+    """
     async with async_session() as session:
         invitation = models.Invitation(
             from_id=from_id, to_id=to_id, game_type=game_type
@@ -117,35 +139,18 @@ async def create_invitation(
         return invitation
 
 
-async def delete_invitation(id_: int, from_id: int) -> models.Invitation:
-    """delete invitation"""
-    async with async_session() as session:
-        stmt = (
-            update(models.Invitation)
-            .where(
-                models.Invitation.id_ == id_,
-                models.Invitation.from_id == from_id,
-                models.Invitation.deleted == False
-            ).values(deleted=True)
-        )
-        result = await session.execute(stmt)
-        await session.commit()
-        return result.rowcount == 1
-
-
 async def get_invitations(
     *, skip: int = 0, limit: int = 10, reverse: bool = False, **kwargs
 ) -> list[models.Invitation]:
-    """retrieve invitations from DB
+    """
+    Retrieve a list of invitations from DB.
 
     Examples:
         # get invitation by ID
         get_invitations(id_=10)
 
         # get pending invitations addressed to user with ID 3
-        get_invitations(skip=0, limit=5, to=3, status='PENDING')
-
-        # TODO: add 'since' and 'before' parameters
+        get_invitations(skip=0, limit=5, to_id=3, status='PENDING')
     """
     async with async_session() as session:
         stmt = select(models.Invitation)
@@ -161,40 +166,82 @@ async def get_invitations(
         return [row[0] for row in (await session.execute(stmt)).all()]
 
 
-async def accept_invitation(id_: int) -> models.Game:
-    """respond to pending invitation"""
-    async with async_session() as session:
-        invitation = await session.get(models.Invitation, id_)
-        invitation.status = models.InvitationStatus.ACCEPTED
+async def cancel_invitation(id_: int) -> bool:
+    """
+    Cancel invitation.
 
+    Returns False if invitation does not exist or does not have PENDING status.
+    Returns True on success.
+    """
+    async with async_session() as session:
+        stmt = (
+            update(models.Invitation)
+            .where(
+                models.Invitation.id_ == id_,
+                models.Invitation.status == models.InvitationStatus.PENDING,
+            ).values(status=models.InvitationStatus.CANCELLED)
+        )
+        result = await session.execute(stmt)
+        await session.commit()
+        return result.rowcount == 1
+
+
+async def accept_invitation(id_: int) -> models.Game | None:
+    """
+    Accept pending invitation and create a new game.
+
+    Returns None if invitation does not exist or does not have PENDING status.
+    Returns a new game object on success.
+    """
+    async with async_session() as session:
+        stmt = select(models.Invitation).where(
+            models.Invitation.id_ == id_,
+            models.Invitation.status == models.InvitationStatus.PENDING,
+        )
+        result = (await session.execute(stmt)).first()
+        invitation = None if not result else result[0]
+        if invitation is None:
+            return None
+
+        invitation.status = models.InvitationStatus.ACCEPTED
         new_game = models.Game(
             player_1=invitation.from_id,
             player_2=invitation.to_id,
             whomst=invitation.from_id,
             invitation_id=id_,
+            game_type=invitation.game_type,
         )
         session.add(new_game)
         await session.commit()
-        return new_game.id_
+
+        return new_game
 
 
-async def decline_invitation(id_: int):
-    """decline pending invitation"""
+async def decline_invitation(id_: int) -> bool:
+    """
+    Decline pending invitation.
+
+    Returns False if invitation does not exist or does not have PENDING status.
+    Returns True on success.
+    """
     async with async_session() as session:
         stmt = (
             update(models.Invitation)
-            .where(models.Invitation.id_ == id_)
-            .values(status=models.InvitationStatus.DECLINED)
+            .where(
+                models.Invitation.id_ == id_,
+                models.Invitation.status == models.InvitationStatus.PENDING,
+            ).values(status=models.InvitationStatus.DECLINED)
         )
-        await session.execute(stmt)
+        result = await session.execute(stmt)
         await session.commit()
+        return result.rowcount == 1
 
 
 async def get_game(id_: int) -> models.Game:
-    """retrieve game from database using game id"""
-
+    """Retrieve game from database using game id"""
     async with async_session() as session:
         stmt = select(models.Game).where(models.Game.id_ == id_)
 
         row = (await session.execute(stmt)).first()
         return row if row is None else row[0]
+
