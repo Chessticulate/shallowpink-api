@@ -24,6 +24,24 @@ FAKE_USER_DATA = [
         "password": "fakepswd3",
         "email": "fakeuser3@fakeemail.com",
     },
+    {
+        "name": "fakeuser4",
+        "password": "fakepswd4",
+        "email": "fakeuser4@fakeemail.com",
+        "deleted": True
+    },
+    {
+        "name": "fakeuser5",
+        "password": "fakepswd5",
+        "email": "fakeuser5@fakeemail.com",
+        "wins": 2
+    },
+    {
+        "name": "fakeuser6",
+        "password": "fakepswd6",
+        "email": "fakeuser6@fakeemail.com",
+        "wins": 1
+    },
 ]
 
 

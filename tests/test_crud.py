@@ -17,31 +17,61 @@ def test_password_hashing():
     assert crud._check_password(pswd, pswd_hash)
 
 
-class TestGetUserByName:
+class TestGetUsers:
+
+    @pytest.mark.parametrize(
+        "query_params",
+        [
+            {"id_": 42069},
+            {"name": "nonexistentuser"},
+            {"id_": 1, "name": "fakeuser2"},
+            {"wins": 100},
+        ]
+    )
+    @pytest.mark.asyncio
+    async def test_get_users_fails_does_not_exist(self, query_params):
+        users = await crud.get_users(**query_params)
+        assert users == []
+
+    @pytest.mark.parametrize(
+        "query_params,expected_count",
+        [
+            ({"id_": 1}, 1),
+            ({"name": "fakeuser2"}, 1),
+            ({"wins": 0}, 4),
+            ({"deleted": True}, 1),
+        ]
+    )
+    @pytest.mark.asyncio
+    async def test_get_users_succeeds(self, query_params, expected_count):
+        users = await crud.get_users(**query_params)
+        assert len(users) == expected_count
 
     @pytest.mark.asyncio
-    async def test_get_user_by_name_does_not_exist(self):
-        user = await crud.get_user_by_name("nonexistentuser")
-        assert user is None
+    async def test_get_users_order_by(self):
+        users = await crud.get_users(order_by="wins", limit=3, skip=3)
+        assert len(users) == 3
+        assert users[0].wins == 0
+        assert users[1].wins == 1
+        assert users[2].wins == 2
 
     @pytest.mark.asyncio
-    async def test_get_user_by_name_succeeds(self, fake_user_data):
-        user = await crud.get_user_by_name(fake_user_data[0]["name"])
-        assert user is not None
-        assert user.name == fake_user_data[0]["name"]
-
-
-class TestGetUserById:
-
-    @pytest.mark.asyncio
-    async def test_get_user_by_id_does_not_exist(self):
-        user = await crud.get_user_by_id("4")
-        assert user is None
+    async def test_get_users_order_by_reverse(self):
+        users = await crud.get_users(order_by="wins", limit=3, reverse=True)
+        assert len(users) == 3
+        assert users[0].wins == 2
+        assert users[1].wins == 1
+        assert users[2].wins == 0
 
     @pytest.mark.asyncio
-    async def test_get_user_by_id_succeeds(self):
-        user = await crud.get_user_by_id("1")
-        assert user is not None
+    async def test_get_deleted_users(self):
+        users = await crud.get_users(deleted=True)
+        assert len(users) == 1
+
+    @pytest.mark.asyncio
+    async def test_get_non_deleted_users(self):
+        users = await crud.get_users(deleted=False)
+        assert len(users) == 5
 
 
 class TestCreateUser:
@@ -72,11 +102,14 @@ class TestDeleteUser:
 
     @pytest.mark.asyncio
     async def test_delete_user_succeeds_and_cant_be_deleted_again(self, restore_fake_data_after, fake_user_data):
-        user = await crud.get_user_by_name(fake_user_data[0]["name"])
-        assert user is not None
-        assert await crud.delete_user(user.id_) is True
-        assert await crud.get_user_by_name(user.name) is None
-        assert await crud.delete_user(user.id_) is False
+        users = await crud.get_users(name=fake_user_data[0]["name"])
+        assert len(users) == 1
+
+        assert await crud.delete_user(users[0].id_) is True
+
+        users = await crud.get_users(name=fake_user_data[0]["name"])
+        assert users[0].deleted
+        assert await crud.delete_user(users[0].id_) is False
 
 
 class TestLogin:
@@ -92,11 +125,12 @@ class TestLogin:
         assert token is None
 
     @pytest.mark.asyncio
-    async def test_login_fails_user_deleted(self, fake_user_data):
-        user = await crud.get_user_by_name(fake_user_data[0]["name"])
-        assert user is not None
+    async def test_login_fails_user_deleted(self, fake_user_data, restore_fake_data_after):
+        result = await crud.get_users(name=fake_user_data[0]["name"])
+        assert len(result) == 1
+        user = result[0]
         assert await crud.delete_user(user.id_) is True
-        token = await crud.login(fake_user_data[0]["name"], fake_user_data[0]["password"])
+        token = await crud.login(fake_user_data[0]["name"], SecretStr(fake_user_data[0]["password"]))
         assert token is None
 
     @pytest.mark.asyncio
@@ -136,22 +170,31 @@ class TestValidateToken:
 class TestCreateInvitation:
 
     @pytest.mark.asyncio
-    async def test_create_invitation_fails_invitor_does_not_exist(self, init_fake_user_data, fake_user_data):
-        invitee = await crud.get_user_by_name(fake_user_data[0]["name"])
-        assert invitee is not None
+    async def test_create_invitation_fails_invitor_does_not_exist(self, fake_user_data):
+        result = await crud.get_users(name=fake_user_data[0]["name"])
+        assert len(result) == 1
+        invitee = result[0]
         with pytest.raises(sqlalchemy.exc.IntegrityError):
             invitation = await crud.create_invitation(42069, invitee.id_)
 
     @pytest.mark.asyncio
-    async def test_create_invitation_fails_invitee_does_not_exist(self, init_fake_user_data, fake_user_data):
-        invitor = await crud.get_user_by_name(fake_user_data[0]["name"])
-        with pytest.raises(sqlalchemy.exc.IntegritError):
+    async def test_create_invitation_fails_invitee_does_not_exist(self, fake_user_data):
+        result = await crud.get_users(name=fake_user_data[0]["name"])
+        assert len(result) == 1
+        invitor = result[0]
+        with pytest.raises(sqlalchemy.exc.IntegrityError):
             invitation = await crud.create_invitation(invitor.id_, 42069)
 
     @pytest.mark.asyncio
     async def test_create_invitation_succeeds(self, restore_fake_data_after, fake_user_data):
-        invitor = await crud.get_user_by_name(fake_user_data[0]["name"])
-        invitee = await crud.get_user_by_name(fake_user_data[1]["name"])
+        result = await crud.get_users(name=fake_user_data[0]["name"])
+        assert len(result) == 1
+        invitor = result[0]
+
+        result = await crud.get_users(name=fake_user_data[1]["name"])
+        assert len(result) == 1
+        invitee = result[0]
+
         invitation = await crud.create_invitation(invitor.id_, invitee.id_)
         assert invitation is not None
         assert invitation.from_id == invitor.id_
@@ -175,18 +218,12 @@ class TestGetInvitations:
         invitations = await crud.get_invitations(**query_params)
         assert invitations == [], f"id_={invitations[0].id_}, status={invitations[0].status}, deleted={invitations[0].deleted}"
 
-    @pytest.mark.asyncio
-    async def test_get_invitations_fails_is_deleted(self, fake_invitation_data):
-        deleted_invite = fake_invitation_data[4]
-        invitations = await crud.get_invitations(from_id=deleted_invite["from_id"], to_id=deleted_invite["to_id"], status=deleted_invite["status"])
-        assert invitations == [], f"id_={invitations[0].id_}, status={invitations[0].status}, deleted={invitations[0].deleted}"
-
     @pytest.mark.parametrize(
         "query_params,expected_count",
         [
             ({"status": models.InvitationStatus.ACCEPTED}, 3),
             ({"status": models.InvitationStatus.PENDING}, 1),
-            ({"from_id": 1}, 2),
+            ({"from_id": 1}, 4),
             ({"to_id": 3}, 1),
         ]
     )
@@ -202,18 +239,28 @@ class TestCancelInvitation:
     async def test_cancel_invitation_fails_doesnt_exist(self):
         assert await crud.cancel_invitation(42069) is False
 
+    @pytest.mark.parametrize(
+        "id_", (1, 5, 6)
+    )
     @pytest.mark.asyncio
-    async def test_cancel_invitation_fails_not_pending(self):
-        assert await crud.cancel_invitation(1) is False
+    async def test_cancel_invitation_fails_not_pending(self, id_):
+        assert await crud.cancel_invitation(id_) is False
 
+    @pytest.mark.parametrize(
+        "id_", (4,)
+    )
     @pytest.mark.asyncio
-    async def test_cancel_invitation_succeeds(self, restore_fake_data_after):
-        invitation = await crud.get_invitations(id_=3)
+    async def test_cancel_invitation_succeeds(self, restore_fake_data_after, id_):
+        result = await crud.get_invitations(id_=id_)
+        assert len(result) == 1
+        invitation = result[0]
 
         assert invitation.status == models.InvitationStatus.PENDING
-        assert await crud.cancel_invation(3) is True
+        assert await crud.cancel_invitation(id_) is True
 
-        invitation = await crud.get_invitations(id_=3)
+        result = await crud.get_invitations(id_=id_)
+        assert len(result) == 1
+        invitation = result[0]
 
         assert invitation.status == models.InvitationStatus.CANCELLED
 
@@ -224,18 +271,28 @@ class TestDeclineInvitation:
     async def test_decline_invitation_fails_doesnt_exist(self):
         assert await crud.decline_invitation(42069) is False
 
+    @pytest.mark.parametrize(
+        "id_", (1, 5, 6)
+    )
     @pytest.mark.asyncio
-    async def test_decline_invitation_fails_not_pending(self):
-        assert await crud.decline_invitation(6) is False
+    async def test_decline_invitation_fails_not_pending(self, id_):
+        assert await crud.decline_invitation(id_) is False
 
+    @pytest.mark.parametrize(
+        "id_", (4,)
+    )
     @pytest.mark.asyncio
-    async def test_decline_invitation_succeeds(self, restore_fake_data_after):
-        invitation = await crud.get_invitations(id_=3)
+    async def test_decline_invitation_succeeds(self, restore_fake_data_after, id_):
+        result = await crud.get_invitations(id_=id_)
+        assert len(result) == 1
+        invitation = result[0]
 
         assert invitation.status == models.InvitationStatus.PENDING
-        assert await crud.decline_invitation(4) is True
+        assert await crud.decline_invitation(id_) is True
 
-        invitation = await crud.get_invitations(id_=3)
+        result = await crud.get_invitations(id_=id_)
+        assert len(result) == 1
+        invitation = result[0]
 
         assert invitation.status == models.InvitationStatus.DECLINED
 
@@ -246,24 +303,34 @@ class TestAcceptInvitation:
     async def test_accept_invitation_fails_doesnt_exist(self):
         assert await crud.accept_invitation(42069) is None
 
+    @pytest.mark.parametrize(
+        "id_", (1, 5, 6)
+    )
     @pytest.mark.asyncio
-    async def test_accept_invitation_fails_not_pending(self):
-        assert await crud.accept_invitation(1) is None
+    async def test_accept_invitation_fails_not_pending(self, id_):
+        assert await crud.accept_invitation(id_) is None
 
+    @pytest.mark.parametrize(
+        "id_", (4,)
+    )
     @pytest.mark.asyncio
-    async def test_accept_invitation_succeeds(self, restore_fake_data_after):
-        invitation = await crud.get_invitations(id_=4)
-
+    async def test_accept_invitation_succeeds(self, restore_fake_data_after, id_):
+        result = await crud.get_invitations(id_=id_)
+        assert len(result) == 1
+        invitation = result[0]
         assert invitation.status == models.InvitationStatus.PENDING
 
-        game = await crud.accept_invitation(4)
-        invitation = await crud.get_invitations(id_=4)
+        game = await crud.accept_invitation(id_)
+
+        result = await crud.get_invitations(id_=id_)
+        assert len(result) == 1
+        invitation = result[0]
+        assert invitation.status == models.InvitationStatus.ACCEPTED
 
         assert game is not None
         assert game.invitation_id == invitation.id_
         assert game.player_1 == invitation.from_id
         assert game.player_2 == invitation.to_id
-        assert invitation.status == models.InvitationStatus.ACCEPTED
 
 
 @pytest.mark.asyncio

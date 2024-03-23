@@ -14,15 +14,15 @@ Functions:
 """
 
 from datetime import datetime, timedelta, timezone
+from enum import Enum
 
 import bcrypt
 import jwt
 from pydantic import SecretStr
 from sqlalchemy import select, update, exc
 
-from chessticulate_api import models
+from chessticulate_api import models, db
 from chessticulate_api.config import CONFIG
-from chessticulate_api.db import async_session
 
 
 def _hash_password(pswd: SecretStr) -> str:
@@ -44,22 +44,34 @@ def validate_token(token: str) -> dict:
     return jwt.decode(token, CONFIG.secret, CONFIG.algorithm)
 
 
-async def get_user_by_name(name: str) -> models.User | None:
-    """Retrieve user from database by user name."""
-    async with async_session() as session:
-        stmt = select(models.User).where(models.User.name == name, models.User.deleted == False)
+async def get_users(
+    *, skip: int = 0, limit: int = 10, order_by: str = "date_joined", reverse: bool = False, **kwargs
+) -> list[models.Invitation]:
+    """
+    Retrieve a list of users from DB.
 
-        row = (await session.execute(stmt)).first()
-        return row if row is None else row[0]
+    Examples:
+        # get user by name or ID
+        get_users(id_=10)
+        get_users(name="user10")
 
+        # get top five winning users
+        get_users(skip=0, limit=5, reverse=True, order_by="wins")
+    """
+    async with db.async_session() as session:
+        stmt = select(models.User)
+        for k, v in kwargs.items():
+            stmt = stmt.where(getattr(models.User, k) == v)
 
-async def get_user_by_id(id_: int) -> models.User | None:
-    """Retrieve user from database by user ID."""
-    async with async_session() as session:
-        stmt = select(models.User).where(models.User.id_ == id_, models.User.deleted == False)
+        order_by_attr = getattr(models.User, order_by)
+        if reverse:
+            order_by_attr = order_by_attr.desc()
+        else:
+            order_by_attr = order_by_attr.asc()
+        stmt = stmt.order_by(order_by_attr)
 
-        row = (await session.execute(stmt)).first()
-        return row if row is None else row[0]
+        stmt = stmt.offset(skip).limit(limit)
+        return [row[0] for row in (await session.execute(stmt)).all()]
 
 
 async def create_user(name: str, email: str, pswd: SecretStr) -> models.User:
@@ -69,7 +81,7 @@ async def create_user(name: str, email: str, pswd: SecretStr) -> models.User:
     Raises a sqlalchemy.exc.IntegrityError if either name or email is already present.
     """
     hashed_pswd = _hash_password(pswd)
-    async with async_session() as session:
+    async with db.async_session() as session:
         user = models.User(name=name, email=email, password=hashed_pswd)
         session.add(user)
         await session.commit()
@@ -86,7 +98,7 @@ async def delete_user(id_: int) -> bool:
     not actually deleted from the users table, but is only
     marked "deleted", and it's email and password removed.
     """
-    async with async_session() as session:
+    async with db.async_session() as session:
         stmt = (
             update(models.User)
             .where(models.User.id_ == id_, models.User.deleted == False)
@@ -101,12 +113,14 @@ async def login(name: str, pswd: SecretStr) -> str | None:
     """
     Validate user name and password.
 
-    Returns None if bad login fails.
+    Returns None if login fails.
     Returns JWT in the form of a str on success.
     """
-    user = await get_user_by_name(name)
-    if user is None:
+    result = await get_users(name=name, deleted=False)
+    if len(result) == 0:
         return None
+    user = result[0]
+
     if not _check_password(pswd, user.password):
         return None
     return jwt.encode(
@@ -129,7 +143,7 @@ async def create_invitation(
     Does not check if the from_id or to_id have been marked deleted, that will
     have to be done separately.
     """
-    async with async_session() as session:
+    async with db.async_session() as session:
         invitation = models.Invitation(
             from_id=from_id, to_id=to_id, game_type=game_type
         )
@@ -152,7 +166,7 @@ async def get_invitations(
         # get pending invitations addressed to user with ID 3
         get_invitations(skip=0, limit=5, to_id=3, status='PENDING')
     """
-    async with async_session() as session:
+    async with db.async_session() as session:
         stmt = select(models.Invitation)
         for k, v in kwargs.items():
             stmt = stmt.where(getattr(models.Invitation, k) == v)
@@ -173,7 +187,7 @@ async def cancel_invitation(id_: int) -> bool:
     Returns False if invitation does not exist or does not have PENDING status.
     Returns True on success.
     """
-    async with async_session() as session:
+    async with db.async_session() as session:
         stmt = (
             update(models.Invitation)
             .where(
@@ -193,7 +207,7 @@ async def accept_invitation(id_: int) -> models.Game | None:
     Returns None if invitation does not exist or does not have PENDING status.
     Returns a new game object on success.
     """
-    async with async_session() as session:
+    async with db.async_session() as session:
         stmt = select(models.Invitation).where(
             models.Invitation.id_ == id_,
             models.Invitation.status == models.InvitationStatus.PENDING,
@@ -224,7 +238,7 @@ async def decline_invitation(id_: int) -> bool:
     Returns False if invitation does not exist or does not have PENDING status.
     Returns True on success.
     """
-    async with async_session() as session:
+    async with db.async_session() as session:
         stmt = (
             update(models.Invitation)
             .where(
@@ -239,7 +253,7 @@ async def decline_invitation(id_: int) -> bool:
 
 async def get_game(id_: int) -> models.Game:
     """Retrieve game from database using game id"""
-    async with async_session() as session:
+    async with db.async_session() as session:
         stmt = select(models.Game).where(models.Game.id_ == id_)
 
         row = (await session.execute(stmt)).first()
