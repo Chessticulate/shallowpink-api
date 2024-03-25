@@ -12,7 +12,7 @@ build-backend = "setuptools.build_meta"
 dev = ["black", "pylint", "pytest", "pytest-asyncio", "pytest-cov", "isort", "aiosqlite"]
 
 [tool.isort]
-line_length = 88
+profile = "black"
 
 [tool.black]
 line_length = 88
