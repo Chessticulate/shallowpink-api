@@ -292,3 +292,17 @@ async def get_games(
 
         stmt = stmt.offset(skip).limit(limit)
         return [row[0] for row in (await session.execute(stmt)).all()]
+
+def do_move(id_: int, new_state: str) -> bool:
+
+    """ updates game in database using given state """
+    
+    async with db.async_session() as session:
+        stmt = (
+            update(models.Game)
+            .where(models.Game.id_ == id_)
+            .values(state=new_state)
+        )
+        result = await session.execute(stmt)
+        await session.commit()
+        return result.rowcount == 1
