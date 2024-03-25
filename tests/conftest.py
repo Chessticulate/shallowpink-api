@@ -1,12 +1,12 @@
+from copy import copy
+
 import pytest
 import pytest_asyncio
-from copy import copy
 from pydantic import SecretStr
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from chessticulate_api import config, crud, db, models
-
 
 FAKE_USER_DATA = [
     {
@@ -28,19 +28,19 @@ FAKE_USER_DATA = [
         "name": "fakeuser4",
         "password": "fakepswd4",
         "email": "fakeuser4@fakeemail.com",
-        "deleted": True
+        "deleted": True,
     },
     {
         "name": "fakeuser5",
         "password": "fakepswd5",
         "email": "fakeuser5@fakeemail.com",
-        "wins": 2
+        "wins": 2,
     },
     {
         "name": "fakeuser6",
         "password": "fakepswd6",
         "email": "fakeuser6@fakeemail.com",
-        "wins": 1
+        "wins": 1,
     },
 ]
 
