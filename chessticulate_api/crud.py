@@ -9,19 +9,19 @@ Functions:
     login(name: str, pswd: SecretStr) -> str
     create_invitation(from_: str, to: str, game_type: str = models.GameType.CHESS.value)
         -> models.Invitation
-    get_invitations(*, skip: int = 0, limit: int = 10, reverse: bool = False, **kwargs) -> list[models.Invitation]:
+    get_invitations(*, skip: int = 0, limit: int = 10, reverse: bool = False, **kwargs)
+        -> list[models.Invitation]:
     validate_token(token: str) -> bool
 """
 
 from datetime import datetime, timedelta, timezone
-from enum import Enum
 
 import bcrypt
 import jwt
 from pydantic import SecretStr
-from sqlalchemy import select, update, exc
+from sqlalchemy import select, update
 
-from chessticulate_api import models, db
+from chessticulate_api import db, models
 from chessticulate_api.config import CONFIG
 
 
@@ -45,7 +45,12 @@ def validate_token(token: str) -> dict:
 
 
 async def get_users(
-    *, skip: int = 0, limit: int = 10, order_by: str = "date_joined", reverse: bool = False, **kwargs
+    *,
+    skip: int = 0,
+    limit: int = 10,
+    order_by: str = "date_joined",
+    reverse: bool = False,
+    **kwargs,
 ) -> list[models.Invitation]:
     """
     Retrieve a list of users from DB.
@@ -100,6 +105,7 @@ async def delete_user(id_: int) -> bool:
     """
     async with db.async_session() as session:
         stmt = (
+            # pylint: disable=singleton-comparison
             update(models.User)
             .where(models.User.id_ == id_, models.User.deleted == False)
             .values(password=None, email=None, deleted=True)
@@ -193,7 +199,8 @@ async def cancel_invitation(id_: int) -> bool:
             .where(
                 models.Invitation.id_ == id_,
                 models.Invitation.status == models.InvitationStatus.PENDING,
-            ).values(status=models.InvitationStatus.CANCELLED)
+            )
+            .values(status=models.InvitationStatus.CANCELLED)
         )
         result = await session.execute(stmt)
         await session.commit()
@@ -244,7 +251,8 @@ async def decline_invitation(id_: int) -> bool:
             .where(
                 models.Invitation.id_ == id_,
                 models.Invitation.status == models.InvitationStatus.PENDING,
-            ).values(status=models.InvitationStatus.DECLINED)
+            )
+            .values(status=models.InvitationStatus.DECLINED)
         )
         result = await session.execute(stmt)
         await session.commit()
@@ -252,7 +260,12 @@ async def decline_invitation(id_: int) -> bool:
 
 
 async def get_games(
-    *, skip: int = 0, limit: int = 10, order_by: str = "date_started", reverse: bool = False, **kwargs
+    *,
+    skip: int = 0,
+    limit: int = 10,
+    order_by: str = "date_started",
+    reverse: bool = False,
+    **kwargs,
 ) -> list[models.Game]:
     """
     Retrieve a list of games from DB.
@@ -260,7 +273,7 @@ async def get_games(
     Examples:
         # get game by ID
         get_games(id_=10)
-        
+
         # list 10 games where player_1 id = 5
         get_games(player_1=5, skip=0, limit=10)
 
