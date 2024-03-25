@@ -2,7 +2,7 @@ import pytest
 import pytest_asyncio
 from copy import copy
 from pydantic import SecretStr
-from sqlalchemy import delete, text
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from chessticulate_api import config, crud, db, models
@@ -112,13 +112,6 @@ def fake_app_secret(scope="session", autouse=True):
     config.CONFIG.secret = "fake_secret"
 
 
-@pytest_asyncio.fixture(scope="session", autouse=True)
-async def sqlite_enforce_foreign_keys():
-    async with db.async_session() as session:
-        await session.execute(text("PRAGMA foreign_keys = ON;"))
-        await session.commit()
-
-
 @pytest.fixture
 def fake_user_data():
     return copy(FAKE_USER_DATA)
@@ -135,32 +128,35 @@ def fake_game_data(scope="session"):
 
 
 async def _init_fake_data():
-    async with db.async_session() as session:
-        for data in FAKE_USER_DATA:
-            data_copy = data.copy()
-            pswd = crud._hash_password(SecretStr(data_copy.pop("password")))
-            user = models.User(**data_copy, password=pswd)
-            session.add(user)
-        for data in FAKE_INVITATION_DATA:
-            invitation = models.Invitation(**data)
-            session.add(invitation)
-        for data in FAKE_GAME_DATA:
-            game = models.Game(**data)
-            session.add(game)
-        await session.commit()
-
-
-async def _drop_all_data():
     db.async_engine = db.create_async_engine(
         config.CONFIG.conn_str, echo=config.CONFIG.sql_echo
     )
     db.async_session = db.async_sessionmaker(db.async_engine, expire_on_commit=False)
     await models.init_db()
 
+    async with db.async_session() as session:
+        await session.execute(text("PRAGMA foreign_keys = ON;"))
+        await session.commit()
 
-@pytest_asyncio.fixture
-async def drop_all_data():
-    await _drop_all_data()
+    async with db.async_session() as session:
+        for data in FAKE_USER_DATA:
+            data_copy = data.copy()
+            pswd = crud._hash_password(SecretStr(data_copy.pop("password")))
+            user = models.User(**data_copy, password=pswd)
+            session.add(user)
+        await session.commit()
+
+    async with db.async_session() as session:
+        for data in FAKE_INVITATION_DATA:
+            invitation = models.Invitation(**data)
+            session.add(invitation)
+        await session.commit()
+
+    async with db.async_session() as session:
+        for data in FAKE_GAME_DATA:
+            game = models.Game(**data)
+            session.add(game)
+        await session.commit()
 
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
@@ -171,5 +167,4 @@ async def init_fake_data():
 @pytest_asyncio.fixture
 async def restore_fake_data_after():
     yield
-    await _drop_all_data()
     await _init_fake_data()

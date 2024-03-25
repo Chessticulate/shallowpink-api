@@ -176,6 +176,7 @@ class TestCreateInvitation:
         invitee = result[0]
         with pytest.raises(sqlalchemy.exc.IntegrityError):
             invitation = await crud.create_invitation(42069, invitee.id_)
+            print(f"{invitation.from_id=}, {invitation.to_id=}, {invitation.id_=}")
 
     @pytest.mark.asyncio
     async def test_create_invitation_fails_invitee_does_not_exist(self, fake_user_data):
@@ -333,18 +334,47 @@ class TestAcceptInvitation:
         assert game.player_2 == invitation.to_id
 
 
-@pytest.mark.asyncio
-async def test_get_game(init_fake_game_data, fake_game_data):
+class TestGetGames:
 
-    # assume no user has an id 666
-    assert await crud.get_game(666) is None
+    @pytest.mark.parametrize(
+        "query_params",
+        [
+            {"id_": 42069},
+            {"player_1": 1234},
+            {"player_2": 1, "player_1": -1},
+            {"whomst": 6},
+            {"winner": 10},
+        ]
+    )
+    @pytest.mark.asyncio
+    async def test_get_games_fails_does_not_exist(self, query_params):
+        games = await crud.get_games(**query_params)
+        assert games == []
 
-    id_ = 1
-    for data in fake_game_data:
-        game = await crud.get_game(id_)
-        print(game.player_1)
-        print(game.invitation_id)
-        id_ += 1
-        assert game.player_1 == int(data["player_1"])
-        assert game.player_2 == int(data["player_2"])
-        assert game.whomst == int(data["whomst"])
+    @pytest.mark.parametrize(
+        "query_params,expected_count",
+        [
+            ({"id_": 2}, 1),
+            ({"player_1": 3}, 1),
+            ({"player_1": 2, "player_2": 3}, 1),
+        ]
+    )
+    @pytest.mark.asyncio
+    async def test_get_games_succeeds(self, query_params, expected_count):
+        games = await crud.get_games(**query_params)
+        assert len(games) == expected_count
+
+    @pytest.mark.asyncio
+    async def test_get_games_order_by(self):
+        games = await crud.get_games(order_by="whomst", limit=3, skip=1)
+        assert len(games) == 2
+        assert games[0].whomst == 2
+        assert games[1].whomst == 3
+
+    @pytest.mark.asyncio
+    async def test_get_games_order_by_reverse(self):
+        games = await crud.get_games(order_by="whomst", limit=3, reverse=True)
+        assert len(games) == 3
+        assert games[0].whomst == 3
+        assert games[1].whomst == 2
+        assert games[2].whomst == 1

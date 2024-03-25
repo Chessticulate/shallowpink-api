@@ -251,11 +251,31 @@ async def decline_invitation(id_: int) -> bool:
         return result.rowcount == 1
 
 
-async def get_game(id_: int) -> models.Game:
-    """Retrieve game from database using game id"""
+async def get_games(
+    *, skip: int = 0, limit: int = 10, order_by: str = "date_started", reverse: bool = False, **kwargs
+) -> list[models.Game]:
+    """
+    Retrieve a list of games from DB.
+
+    Examples:
+        # get game by ID
+        get_games(id_=10)
+        
+        # list 10 games where player_1 id = 5
+        get_games(player_1=5, skip=0, limit=10)
+
+    """
     async with db.async_session() as session:
-        stmt = select(models.Game).where(models.Game.id_ == id_)
+        stmt = select(models.Game)
+        for k, v in kwargs.items():
+            stmt = stmt.where(getattr(models.Game, k) == v)
 
-        row = (await session.execute(stmt)).first()
-        return row if row is None else row[0]
+        order_by_attr = getattr(models.Game, order_by)
+        if reverse:
+            order_by_attr = order_by_attr.desc()
+        else:
+            order_by_attr = order_by_attr.asc()
+        stmt = stmt.order_by(order_by_attr)
 
+        stmt = stmt.offset(skip).limit(limit)
+        return [row[0] for row in (await session.execute(stmt)).all()]
