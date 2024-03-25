@@ -16,7 +16,16 @@ Functions:
 
 import enum
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, func, sql, text
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    func,
+    sql,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from chessticulate_api import db
@@ -96,7 +105,7 @@ class Game(Base):  # pylint: disable=too-few-public-methods
         Enum(GameType), nullable=False, server_default=GameType.CHESS.value
     )
     date_started: Mapped[str] = mapped_column(
-        DateTime, server_default=func.now(), nullable=True
+        DateTime, server_default=func.now(), nullable=True  # pylint: disable=not-callable
     )
     invitation_id: Mapped[int] = mapped_column(
         ForeignKey("invitations.id"), nullable=False
