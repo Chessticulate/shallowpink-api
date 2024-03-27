@@ -18,7 +18,6 @@ def test_password_hashing():
 
 
 class TestGetUsers:
-
     @pytest.mark.parametrize(
         "query_params",
         [
@@ -75,7 +74,6 @@ class TestGetUsers:
 
 
 class TestCreateUser:
-
     @pytest.mark.asyncio
     async def test_create_user_fails_duplicate_name(self, fake_user_data):
         with pytest.raises(sqlalchemy.exc.IntegrityError):
@@ -105,7 +103,6 @@ class TestCreateUser:
 
 
 class TestDeleteUser:
-
     @pytest.mark.asyncio
     async def test_delete_user_fails_does_not_exist(self):
         assert await crud.delete_user(42069) == False
@@ -125,7 +122,6 @@ class TestDeleteUser:
 
 
 class TestLogin:
-
     @pytest.mark.asyncio
     async def test_login_fails_user_does_not_exist(self):
         token = await crud.login("doesnotexist", SecretStr("password"))
@@ -158,7 +154,6 @@ class TestLogin:
 
 
 class TestValidateToken:
-
     @pytest.mark.asyncio
     async def test_validate_token_fails_bad_token(self):
         with pytest.raises(jwt.exceptions.DecodeError):
@@ -188,7 +183,6 @@ class TestValidateToken:
 
 
 class TestCreateInvitation:
-
     @pytest.mark.asyncio
     async def test_create_invitation_fails_invitor_does_not_exist(self, fake_user_data):
         result = await crud.get_users(name=fake_user_data[0]["name"])
@@ -227,7 +221,6 @@ class TestCreateInvitation:
 
 
 class TestGetInvitations:
-
     @pytest.mark.parametrize(
         "query_params",
         [
@@ -240,9 +233,10 @@ class TestGetInvitations:
     @pytest.mark.asyncio
     async def test_get_invitations_fails_doesnt_exist(self, query_params):
         invitations = await crud.get_invitations(**query_params)
-        assert (
-            invitations == []
-        ), f"id_={invitations[0].id_}, status={invitations[0].status}, deleted={invitations[0].deleted}"
+        assert invitations == [], (
+            f"id_={invitations[0].id_}, status={invitations[0].status},"
+            f" deleted={invitations[0].deleted}"
+        )
 
     @pytest.mark.parametrize(
         "query_params,expected_count",
@@ -260,7 +254,6 @@ class TestGetInvitations:
 
 
 class TestCancelInvitation:
-
     @pytest.mark.asyncio
     async def test_cancel_invitation_fails_doesnt_exist(self):
         assert await crud.cancel_invitation(42069) is False
@@ -288,7 +281,6 @@ class TestCancelInvitation:
 
 
 class TestDeclineInvitation:
-
     @pytest.mark.asyncio
     async def test_decline_invitation_fails_doesnt_exist(self):
         assert await crud.decline_invitation(42069) is False
@@ -316,7 +308,6 @@ class TestDeclineInvitation:
 
 
 class TestAcceptInvitation:
-
     @pytest.mark.asyncio
     async def test_accept_invitation_fails_doesnt_exist(self):
         assert await crud.accept_invitation(42069) is None
@@ -348,7 +339,6 @@ class TestAcceptInvitation:
 
 
 class TestGetGames:
-
     @pytest.mark.parametrize(
         "query_params",
         [
@@ -391,3 +381,26 @@ class TestGetGames:
         assert games[0].whomst == 3
         assert games[1].whomst == 2
         assert games[2].whomst == 1
+
+
+class TestDoMove:
+    @pytest.mark.parametrize(
+        "id_, new_state",
+        [
+            (
+                {"id_": 1},
+                {
+                    "state": (
+                        '{ "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq'
+                        ' e3 0 1", "states": { "-1219502575": "2", "-1950040747": "2",'
+                        ' "1823187191": "1", "1287635123": "1" } }'
+                    )
+                },
+            ),
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_do_move_succeeds(self, id_, new_state):
+        # valid game id is required
+        game = await crud.get_games(**id_)
+        await crud.do_move(id_["id_"], new_state["state"])

@@ -293,7 +293,7 @@ async def get_games(
         stmt = stmt.offset(skip).limit(limit)
         return [row[0] for row in (await session.execute(stmt)).all()]
 
-def do_move(id_: int, new_state: str) -> bool:
+async def do_move(id_: int, new_state: str) -> bool:
 
     """ updates game in database using given state """
     

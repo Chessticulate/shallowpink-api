@@ -45,3 +45,14 @@ def test_signup():
     )
 
     assert response.status_code == 200
+
+def test_get_user():
+    response = client.get("/user")
+    assert response.status_code == 400
+
+    id_response = client.get("/user?user_id=1")
+    assert id_response.status_code == 200 
+
+    name_response = client.get("/user?user_name=fakeuser1")
+    assert name_response.status_code == 200
+
