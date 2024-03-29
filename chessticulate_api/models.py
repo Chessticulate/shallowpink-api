@@ -16,16 +16,7 @@ Functions:
 
 import enum
 
-from sqlalchemy import (
-    Boolean,
-    DateTime,
-    Enum,
-    ForeignKey,
-    Integer,
-    String,
-    func,
-    sql,
-)
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, func, sql
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from chessticulate_api import db
@@ -105,7 +96,9 @@ class Game(Base):  # pylint: disable=too-few-public-methods
         Enum(GameType), nullable=False, server_default=GameType.CHESS.value
     )
     date_started: Mapped[str] = mapped_column(
-        DateTime, server_default=func.now(), nullable=True  # pylint: disable=not-callable
+        DateTime,
+        server_default=func.now(),
+        nullable=True,  # pylint: disable=not-callable
     )
     invitation_id: Mapped[int] = mapped_column(
         ForeignKey("invitations.id"), nullable=False
@@ -123,6 +116,23 @@ class Game(Base):  # pylint: disable=too-few-public-methods
             ' "states": {}}'
         ),
     )
+
+
+class Move(Base):
+    """Move SQL Model"""
+
+    __tablename__ = "moves"
+
+    id_: Mapped[int] = mapped_column("id", primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    game_id: Mapped[int] = mapped_column(ForeignKey("games.id"), nullable=False)
+    timestamp: Mapped[str] = mapped_column(
+        DateTime,
+        server_default=func.now(),
+        nullable=True,  # pylint: disable=not-callable
+    )
+    movestr: Mapped[str] = mapped_column(String, nullable=False)
+    fen: Mapped[str] = mapped_column(String, nullable=False)
 
 
 async def init_db():

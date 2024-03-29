@@ -385,22 +385,37 @@ class TestGetGames:
 
 class TestDoMove:
     @pytest.mark.parametrize(
-        "id_, new_state",
+        "game_id, user_id, move, new_state",
         [
             (
-                {"id_": 1},
-                {
-                    "state": (
-                        '{ "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq'
-                        ' e3 0 1", "states": { "-1219502575": "2", "-1950040747": "2",'
-                        ' "1823187191": "1", "1287635123": "1" } }'
-                    )
-                },
+                1,
+                1,
+                "e4",
+                (
+                    '{ "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq'
+                    ' e3 0 1", "states": { "-1219502575": "2", "-1950040747": "2",'
+                    ' "1823187191": "1", "1287635123": "1" } }'
+                ),
             ),
         ],
     )
     @pytest.mark.asyncio
-    async def test_do_move_succeeds(self, id_, new_state):
-        # valid game id is required
-        game = await crud.get_games(**id_)
-        await crud.do_move(id_["id_"], new_state["state"])
+    async def test_do_move_succeeds(
+        self, game_id, user_id, move, new_state, restore_fake_data_after
+    ):
+        # assert default game.state
+        game = await crud.get_games(id_=game_id)
+        assert (
+            game[0].state
+            == '{ "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",'
+            ' "states": {}}'
+        )
+        await crud.do_move(game_id, user_id, move, new_state)
+
+        game_after_move = await crud.get_games(id_=game_id)
+        assert (
+            game_after_move[0].state
+            == '{ "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",'
+            ' "states": { "-1219502575": "2", "-1950040747": "2", "1823187191": "1",'
+            ' "1287635123": "1" } }'
+        )
