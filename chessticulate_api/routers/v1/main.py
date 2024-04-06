@@ -228,3 +228,8 @@ async def decline_invitation(
 
     await crud.decline_invitation(invitation_id)
     return dict[message:"ok"]
+
+
+# @router.post("/games/{game_id}/move")
+
+
