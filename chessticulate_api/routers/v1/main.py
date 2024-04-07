@@ -59,9 +59,9 @@ async def get_user(
     user_name: str | None = None,
 ) -> schemas.GetUserResponse:
     if user_id:
-        return dict(await crud.get_user_by_id(user_id))
+        return dict(await crud.get_users(id_=user_id))
     if user_name:
-        return dict(await crud.get_user_by_name(user_name))
+        return dict(await crud.get_users(name=user_name))
 
     raise HTTPException(
         status_code=400, detail="must provide either 'user_id' or 'user_name'"
