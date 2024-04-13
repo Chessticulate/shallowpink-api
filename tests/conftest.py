@@ -106,7 +106,6 @@ FAKE_GAME_DATA = [
     },
 ]
 
-
 @pytest.fixture
 def fake_app_secret(scope="session", autouse=True):
     config.CONFIG.secret = "fake_secret"
@@ -126,6 +125,10 @@ def fake_invitation_data(scope="session"):
 def fake_game_data(scope="session"):
     return copy(FAKE_GAME_DATA)
 
+@pytest_asyncio.fixture
+async def token(scope="session"):
+    fakeuser1 = FAKE_USER_DATA[0]
+    return await crud.login(fakeuser1["name"], SecretStr(fakeuser1["password"]))
 
 async def _init_fake_data():
     db.async_engine = db.create_async_engine(
@@ -158,11 +161,9 @@ async def _init_fake_data():
             session.add(game)
         await session.commit()
 
-
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def init_fake_data():
     await _init_fake_data()
-
 
 @pytest_asyncio.fixture
 async def restore_fake_data_after():

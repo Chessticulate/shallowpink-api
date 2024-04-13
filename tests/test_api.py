@@ -73,32 +73,22 @@ class TestGetUser:
     # eventually should add a valid jwt user to conftest, or something
     
     @pytest.mark.asyncio
-    async def test_get_user_fails_missing_url_params(self):
-        login_response = client.post(
-            "/login",
-            headers={},
-            json={"name": "fakeuser3", "email": "fakeuser3@fakeemail.com", "password": "fakepswd3"}
-        )
-        token = login_response.json()["jwt"]
+    async def test_get_user_fails_missing_url_params(self, token):
         get_user_response = client.get(
             "/user",
-            headers={"Authorization": token},
+            headers={"credentials": token},
         )
-        assert get_user_response.status_code == 403 
+        print(get_user_response)
+        assert get_user_response.status_code == 400
 
     @pytest.mark.asyncio
-    async def test_get_user_by_id(self):
-        login_response = client.post(
-            "/login",
-            headers={},
-            json={"name": "fakeuser3", "email": "fakeuser3@fakeemail.com", "password": "fakepswd3"}
-        )
-        token = login_response.json()["jwt"]
+    async def test_get_user_by_id(self, token):
         get_user_response = client.get(
+            # "/user?user_id=1",
             "/user?user_id=1",
-            headers={"Authorization": token},
+            headers={"credentials": token}
         )
-        print(get_user_response.json())
+        print(get_user_response)
         assert get_user_response.status_code == 200 
 
     @pytest.mark.asyncio
