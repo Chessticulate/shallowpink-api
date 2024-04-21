@@ -11,11 +11,10 @@ Classes:
 
 import enum
 
-from pydantic import BaseModel, EmailStr, Field, SecretStr, StringConstraints
+from pydantic import BaseModel, RootModel, EmailStr, Field, SecretStr, StringConstraints
 from pydantic.functional_validators import BeforeValidator
 from typing_extensions import Annotated
 from datetime import datetime
-from typing import List
 
 class GameTypeEnum(str, enum.Enum):
     """Game Type Enum"""
@@ -89,6 +88,7 @@ class CreateUserResponse(BaseModel):
     email: str
     password: str
 
+
 def _validate_password(s: str) -> str:
     """Make sure new password conforms to rules"""
     assert len(s) >= 8, "Password is too short (<8 characters)"
@@ -131,10 +131,12 @@ class GetUserResponse(BaseModel):
     draws: int
     losses: int
 
-class GetUserListResponse(BaseModel):
+
+class GetUserListResponse(RootModel):
     """Pydantic model for returning a list of GetUserResponses"""
 
-    user_list: List[GetUserResponse]
+    root: list[GetUserResponse]
+
 
 class AcceptInvitationResponse(BaseModel):
     """Pydantic model for accepting game invitation"""
