@@ -10,11 +10,12 @@ Classes:
 """
 
 import enum
+from datetime import datetime
 
-from pydantic import BaseModel, RootModel, EmailStr, Field, SecretStr, StringConstraints
+from pydantic import BaseModel, EmailStr, Field, RootModel, SecretStr, StringConstraints
 from pydantic.functional_validators import BeforeValidator
 from typing_extensions import Annotated
-from datetime import datetime
+
 
 class GameTypeEnum(str, enum.Enum):
     """Game Type Enum"""

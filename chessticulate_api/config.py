@@ -27,4 +27,4 @@ class CONFIG:  # pylint: disable=too-few-public-methods
     algorithm: str = os.environ.get("APP_JWT_ALGO", "HS256")
 
     # chess workers service url
-    workers_url: str = os.environ.get("WORKERS_URL", "localhost:3000") 
+    workers_url: str = os.environ.get("WORKERS_URL", "localhost:3000")

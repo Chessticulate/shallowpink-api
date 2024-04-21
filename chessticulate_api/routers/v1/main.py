@@ -1,10 +1,10 @@
 from typing import Annotated
 
 import jwt
+import sqlalchemy
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security.http import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import SecretStr
-import sqlalchemy
 
 from chessticulate_api import crud
 from chessticulate_api.routers.v1 import schemas
@@ -43,7 +43,9 @@ async def signup(payload: schemas.CreateUserRequest) -> schemas.CreateUserRespon
     try:
         user = await crud.create_user(payload.name, payload.email, payload.password)
     except sqlalchemy.exc.IntegrityError as ie:
-        raise HTTPException(status_code=400, detail=f"user name '{payload.name}' already exists") from ie
+        raise HTTPException(
+            status_code=400, detail=f"user name '{payload.name}' already exists"
+        ) from ie
 
     return vars(user)
 
@@ -56,7 +58,7 @@ async def get_users(
     skip: int = 0,
     limit: int = 10,
     order_by: str = "date_joined",
-    reverse: bool = False
+    reverse: bool = False,
 ) -> schemas.GetUserListResponse:
     """Retrieve user info."""
     if user_id:
@@ -71,9 +73,7 @@ async def get_users(
 
 
 @router.delete("/users/delete", status_code=204)
-async def delete_user(
-    credentials: Annotated[dict, Depends(get_credentials)]
-):
+async def delete_user(credentials: Annotated[dict, Depends(get_credentials)]):
     """Delete a user. Can only by done by that user on itself."""
     user_id = credentials["user_id"]
     deleted_user = await crud.delete_user(user_id)
@@ -89,13 +89,13 @@ async def create_invitation(
     payload: schemas.CreateInvitationRequest,
 ) -> schemas.CreateInvitationResponse:
     """Send an invitation to a user."""
-    if not (
-        users := await crud.get_users(id_=payload.to_id)
-    ):
+    if not (users := await crud.get_users(id_=payload.to_id)):
         raise HTTPException(status_code=400, detail="addressee does not exist")
 
     if users[0].deleted:
-        raise HTTPException(status_code=400, detail=f"user '{users[0].id_}' has been deleted")
+        raise HTTPException(
+            status_code=400, detail=f"user '{users[0].id_}' has been deleted"
+        )
 
     result = await crud.create_invitation(credentials["user_id"], payload.to_id)
     return vars(result)
@@ -110,7 +110,7 @@ async def get_invitations(
     status: str | None = None,
     skip: int = 10,
     limit: int = 1,
-    reverse: bool = False
+    reverse: bool = False,
 ) -> schemas.GetInvitationResponse:
     """Retrieve a list of invitations."""
     if not (to_id or from_id):
@@ -258,4 +258,3 @@ async def cancel_invitation(
 
     if not await crud.decline_invitation(invitation_id):
         raise HTTPException(status_code=500)
-
