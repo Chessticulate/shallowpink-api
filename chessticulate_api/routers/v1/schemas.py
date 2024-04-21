@@ -14,7 +14,8 @@ import enum
 from pydantic import BaseModel, EmailStr, Field, SecretStr, StringConstraints
 from pydantic.functional_validators import BeforeValidator
 from typing_extensions import Annotated
-
+from datetime import datetime
+from typing import List
 
 class GameTypeEnum(str, enum.Enum):
     """Game Type Enum"""
@@ -35,13 +36,13 @@ class CreateInvitationRequest(BaseModel):
 class CreateInvitationResponse(BaseModel):
     """pydantic model for invite creation response"""
 
-    id_: int = Field(..., alias="id")
-    date_sent: str
-    date_answered: str
+    id_: int = Field(..., alias="id_")
+    date_sent: datetime
+    date_answered: None
     from_id: int
     to_id: int
     game_type: str
-    response: str
+    status: str
 
 
 class DeleteInvitationResponse(BaseModel):
@@ -88,19 +89,6 @@ class CreateUserResponse(BaseModel):
     email: str
     password: str
 
-
-class DeleteUserResponse(BaseModel):
-    """Pydantic model for user creation responses."""
-
-    id_: int = Field(..., alias="id")
-    name: str
-    email: str
-    date_joined: str
-    wins: int
-    draws: int
-    losses: int
-
-
 def _validate_password(s: str) -> str:
     """Make sure new password conforms to rules"""
     assert len(s) >= 8, "Password is too short (<8 characters)"
@@ -135,14 +123,18 @@ class CreateUserRequest(BaseModel):
 class GetUserResponse(BaseModel):
     """Pydantic model for get user response."""
 
-    id_: int = Field(..., alias="id")
+    id_: int = Field(..., alias="id_")
     name: str
     email: str
-    date_joined: str
+    date_joined: datetime
     wins: int
     draws: int
     losses: int
 
+class GetUserListResponse(BaseModel):
+    """Pydantic model for returning a list of GetUserResponses"""
+
+    user_list: List[GetUserResponse]
 
 class AcceptInvitationResponse(BaseModel):
     """Pydantic model for accepting game invitation"""

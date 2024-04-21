@@ -12,10 +12,6 @@ router = APIRouter()
 
 security = HTTPBearer()
 
-# TODO
-# delete user, delete invitation
-# logout?
-
 
 async def get_credentials(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]
@@ -26,7 +22,7 @@ async def get_credentials(
         raise HTTPException(status_code=401, detail="invalid token")
     except jwt.exceptions.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="expired token")
-    if not (user := crud.get_user_by_id(decoded_token["user_id"])):
+    if not (user := crud.get_users(id_=decoded_token["user_id"])):
         raise HTTPException(status_code=401, detail="user has been deleted")
     return decoded_token
 
@@ -57,27 +53,39 @@ async def get_user(
     credentials: Annotated[dict, Depends(get_credentials)],
     user_id: int | None = None,
     user_name: str | None = None,
-) -> schemas.GetUserResponse:
+    skip: int | None = 0,
+    limit: int | None = 10,
+    order_by: str | None = "date_joined",
+    reverse: bool | None = False
+    
+) -> schemas.GetUserListResponse:
+
+    # retrieving a single user with id or name
     if user_id:
-        return dict(await crud.get_users(id_=user_id))
+        result = await crud.get_users(id_=user_id)
+        return schemas.GetUserListResponse(user_list=[schemas.GetUserResponse(**result[0].__dict__)])
+
     if user_name:
-        return dict(await crud.get_users(name=user_name))
+        result = await crud.get_users(name=user_name)
+        return schemas.GetUserListResponse(user_list=[schemas.GetUserResponse(**result[0].__dict__)])
+   
+    #retrieving a list of users 
+    args = {"skip": skip, "limit": limit, "order_by": order_by, "reverse": reverse}
 
-    raise HTTPException(
-        status_code=400, detail="must provide either 'user_id' or 'user_name'"
-    )
+    result = await crud.get_users(**args)
+    users = [schemas.GetUserResponse(**user.__dict__) for user in result]
+    return schemas.GetUserListResponse(user_list=users)
 
 
-# WIP
+# user can only delete themselves, can only do so when logged in
 @router.delete("/user/delete")
 async def delete_user(
     credentials: Annotated[dict, Depends(get_credentials)]
-) -> schemas.DeleteUserResponse:
+) -> bool:
     user_id = credentials["user_id"]
     deleted_user = await crud.delete_user(user_id)
     if deleted_user is not None:
-        # {"message": "User with ID '{credentials['user_id']}' deleted successfully"}
-        return deleted_user
+        return True
     else:
         raise HTTPException(
             status_code=404, detail=f"User with ID '{credentials['user_id']}' not found"
@@ -89,9 +97,19 @@ async def create_invitation(
     credentials: Annotated[dict, Depends(get_credentials)],
     payload: schemas.CreateInvitationRequest,
 ) -> schemas.CreateInvitationResponse:
-    if not crud.get_user_by_id(payload.to_id):
+    if not (
+        user := await crud.get_users(id_=payload.to_id)
+    ):
         raise HTTPException(status_code=400, detail="addressee does not exist")
-    return dict(await crud.create_invitation(credentials["user_id"], payload.to_id))
+    
+    # I decided that the endpoints should check if a user is deleted or not
+    # if get_users cant retrieve deleted users that would defeat the purpose of leaving deleted users in the db 
+    if **user.__dict__["deleted"]:
+        raise HTTPException(status_code=400, detail="user is deleted")
+
+    result = await crud.create_invitation(credentials["user_id"], payload.to_id)
+    print(result.__dict__)
+    return schemas.CreateInvitationResponse(**result.__dict__)
 
 
 # delete_invitation wip
@@ -111,6 +129,7 @@ async def get_invitations(
     status: str | None = None,
     skip: int | None = 10,
     limit: int | None = 1,
+    reverse: bool | None = False
 ) -> schemas.GetInvitationResponse:
     if not (to_id or from_id):
         raise HTTPException(

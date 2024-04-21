@@ -196,6 +196,7 @@ class TestCreateInvitation:
     async def test_create_invitation_fails_invitee_does_not_exist(self, fake_user_data):
         result = await crud.get_users(name=fake_user_data[0]["name"])
         assert len(result) == 1
+        print(result)
         invitor = result[0]
         with pytest.raises(sqlalchemy.exc.IntegrityError):
             invitation = await crud.create_invitation(invitor.id_, 42069)
