@@ -60,9 +60,9 @@ class DeleteInvitationResponse(BaseModel):
 class GetInvitationResponse(BaseModel):
     """pydantic model for get invitation response"""
 
-    id_: int = Field(..., alias="id")
-    date_sent: str
-    date_answered: str
+    id_: int = Field(..., alias="id_")
+    date_sent: datetime
+    date_answered: datetime
     from_id: int
     to_id: int
     game_type: str

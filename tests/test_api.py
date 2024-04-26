@@ -94,7 +94,7 @@ class TestSignup:
         assert result["password"] != "Knightc3!"
 
 
-class TestGetUser:
+class TestGetUsers:
     @pytest.mark.asyncio
     async def test_get_user_by_id(self, token):
         response = await client.get(
@@ -145,6 +145,7 @@ class TestGetUser:
         assert response.status_code == 200
         users = response.json()
         assert len(users) == 3
+        print(users)
 
 
 class TestDeleteUser:
@@ -165,7 +166,7 @@ class TestDeleteUser:
 
 class TestCreateInvitation:
     @pytest.mark.asyncio
-    async def test_creste_invitation_fails_deleted_recipient(self, token):
+    async def test_create_invitation_fails_deleted_recipient(self, token):
         response = await client.post(
             "/invitations",
             headers={"Authorization": f"Bearer {token}"},
@@ -173,3 +174,78 @@ class TestCreateInvitation:
         )
 
         assert response.status_code == 400
+        assert response.json()["detail"] == "user '4' has been deleted"
+
+    @pytest.mark.asyncio
+    async def test_create_invitation_fails_user_DNE(self, token):
+        response = await client.post(
+            "invitations",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"to_id": 9000, "game_type": "CHESS"},
+        )
+
+        assert response.status_code == 400
+        assert response.json()["detail"] == "addressee does not exist"
+
+    @pytest.mark.asyncio
+    async def test_create_invitation_fails_no_to_id_provided(self, token):
+        response = await client.post(
+            "invitations",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"game_type": "CHESS"},
+        )
+
+        assert response.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_create_invitation_succeeds(self, token):
+        response = await client.post(
+            "/invitations",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"to_id": 1, "game_type": "CHESS"},
+        )
+
+        assert response.status_code == 201
+
+
+class TestGetInvitations:
+    @pytest.mark.asyncio
+    async def test_get_invitation_fails_no_to_or_from_id(self, token):
+        response = await client.get(
+            "/invitations",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 400
+        assert response.json()["detail"] == "'to_id' or 'from_id' must be supplied"
+
+    @pytest.mark.asyncio
+    async def test_get_invitation_fails_id_doesnt_match_token(self, token):
+        response = await client.get(
+            "/invitations?to_id=3", headers={"Authorization": f"Bearer {token}"}
+        )
+
+        assert response.status_code == 400
+        assert (
+            response.json()["detail"]
+            == "'to_id' or 'from_id' must match the requestor's user ID"
+        )
+
+    @pytest.mark.asyncio
+    async def test_get_invitation_succeeds_to_id(self, token):
+        response = await client.get(
+            "/invitations?from_id=1", headers={"Authorization": f"Bearer {token}"}
+        )
+
+        print(response.json())
+        assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_get_invitation_test(self, token):
+        params = {"from_id": 1, "to_id": 2}
+        response = await client.get(
+            "/invitations", headers={"Authorization": f"Bearer {token}"}, params=params
+        )
+
+        print(response.json())
+        assert response.status_code == 200

@@ -108,7 +108,7 @@ async def get_invitations(
     from_id: int | None = None,
     invitation_id: int | None = None,
     status: str | None = None,
-    skip: int = 10,
+    skip: int = 0,
     limit: int = 1,
     reverse: bool = False,
 ) -> schemas.GetInvitationResponse:
@@ -133,11 +133,11 @@ async def get_invitations(
     if status:
         args["status"] = status
     result = await crud.get_invitations(**args)
+    return vars(result[0])
+    return [inv for inv in result]
 
-    return [vars(inv) for inv in result]
 
-
-@router.put("/invitations/{invitation_id}/accept")
+@router.put("/invitations/{invitation_id}/accept", status_code=202)
 async def accept_invitation(
     credentials: Annotated[dict, Depends(get_credentials)], invitation_id: int
 ) -> schemas.AcceptInvitationResponse:
