@@ -15,7 +15,7 @@ security = HTTPBearer()
 
 
 async def get_credentials(
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
 ) -> dict:
     """Retrieve and validate user JWTs. For use in endpoints as dependency."""
     try:
@@ -111,7 +111,7 @@ async def get_invitations(
     skip: int = 0,
     limit: int = 1,
     reverse: bool = False,
-) -> schemas.GetInvitationResponse:
+) -> schemas.GetInvitationsListResponse:
     """Retrieve a list of invitations."""
     if not (to_id or from_id):
         raise HTTPException(
@@ -133,8 +133,8 @@ async def get_invitations(
     if status:
         args["status"] = status
     result = await crud.get_invitations(**args)
-    return vars(result[0])
-    return [inv for inv in result]
+
+    return [vars(inv) for inv in result]
 
 
 @router.put("/invitations/{invitation_id}/accept", status_code=202)

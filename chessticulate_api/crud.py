@@ -295,7 +295,6 @@ async def get_games(
 
 
 async def do_move(id_: int, user_id: int, move: str, new_state: str) -> bool:
-
     """updates game in database using given state"""
 
     async with db.async_session() as session:

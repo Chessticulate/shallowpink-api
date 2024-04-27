@@ -11,6 +11,7 @@ Classes:
 
 import enum
 from datetime import datetime
+from typing import Union
 
 from pydantic import BaseModel, EmailStr, Field, RootModel, SecretStr, StringConstraints
 from pydantic.functional_validators import BeforeValidator
@@ -62,11 +63,11 @@ class GetInvitationResponse(BaseModel):
 
     id_: int = Field(..., alias="id_")
     date_sent: datetime
-    date_answered: datetime
+    date_answered: Union[datetime, None]
     from_id: int
     to_id: int
     game_type: str
-    response: str
+    status: str
 
 
 class LoginRequest(BaseModel):
@@ -137,6 +138,12 @@ class GetUserListResponse(RootModel):
     """Pydantic model for returning a list of GetUserResponses"""
 
     root: list[GetUserResponse]
+
+
+class GetInvitationsListResponse(RootModel):
+    """Pydantic model for returning a list of GetInvitationResponses"""
+
+    root: list[GetInvitationResponse]
 
 
 class AcceptInvitationResponse(BaseModel):
