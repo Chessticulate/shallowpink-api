@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security.http import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import SecretStr
 
-from chessticulate_api import crud
+from chessticulate_api import crud, models
 from chessticulate_api.routers.v1 import schemas
 
 router = APIRouter()
@@ -109,7 +109,7 @@ async def get_invitations(
     invitation_id: int | None = None,
     status: str | None = None,
     skip: int = 0,
-    limit: int = 1,
+    limit: int = 10,
     reverse: bool = False,
 ) -> schemas.GetInvitationsListResponse:
     """Retrieve a list of invitations."""
@@ -143,7 +143,7 @@ async def accept_invitation(
 ) -> schemas.AcceptInvitationResponse:
     """Accept an invitation and start a game."""
 
-    invitation_list = crud.get_invitations(id_=invitation_id)
+    invitation_list = await crud.get_invitations(id_=invitation_id)
 
     if not invitation_list:
         raise HTTPException(
@@ -161,17 +161,19 @@ async def accept_invitation(
             ),
         )
 
-    # check if user who sent invitation still exists
-    if await crud.get_user_by_id(inivtation.from_id) is None:
+    user = await crud.get_users(id_=invitation.from_id)
+    print(vars(user[0]))
+    if user[0].deleted == True:
         raise HTTPException(
             status_code=404,
-            deatil=(
+            detail=(
                 f"user with ID '{invitation.from_id}' who sent invitation with id"
                 f" '{invitation_id}' does not exist"
             ),
         )
 
-    if invitation.status != model.InvitationStatus.PENDING:
+    print(invitation.status)
+    if invitation.status != models.InvitationStatus.PENDING:
         raise HTTPException(
             status_code=400,
             detail=(
@@ -184,7 +186,7 @@ async def accept_invitation(
         # possible race condition
         raise HTTPException(status_code=500)
 
-    return result.id_
+    return {"game_id": result.id_}
 
 
 @router.post("/invitations/{invitation_id}/decline")
@@ -210,7 +212,7 @@ async def decline_invitation(
             ),
         )
 
-    if invitation.status != model.InvitationStatus.PENDING:
+    if invitation.status != models.InvitationStatus.PENDING:
         raise HTTPException(
             status_code=400,
             detail=(
@@ -227,7 +229,7 @@ async def decline_invitation(
 async def cancel_invitation(
     credentials: Annotated[dict, Depends(get_credentials)], invitation_id: int
 ) -> schemas.AcceptInvitationResponse:
-    """Accept an invitation."""
+    """Cancel an invitation."""
 
     invitation_list = crud.get_invitations(id_=invitation_id)
 
@@ -247,7 +249,7 @@ async def cancel_invitation(
             ),
         )
 
-    if invitation.status != model.InvitationStatus.PENDING:
+    if invitation.status != models.InvitationStatus.PENDING:
         raise HTTPException(
             status_code=400,
             detail=(

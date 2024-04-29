@@ -198,7 +198,7 @@ class TestCreateInvitation:
         assert response.status_code == 422
 
     @pytest.mark.asyncio
-    async def test_create_invitation_succeeds(self, token):
+    async def test_create_invitation_succeeds(self, token, restore_fake_data_after):
         response = await client.post(
             "/invitations",
             headers={"Authorization": f"Bearer {token}"},
@@ -237,15 +237,81 @@ class TestGetInvitations:
             "/invitations?from_id=1", headers={"Authorization": f"Bearer {token}"}
         )
 
-        print(response.json())
         assert response.status_code == 200
+        assert len(response.json()) == 4
 
     @pytest.mark.asyncio
-    async def test_get_invitation_test(self, token):
-        params = {"from_id": 1, "to_id": 2}
+    async def test_get_invitation_succeeds_using_to_and_from(self, token):
+        params = {"from_id": 3, "to_id": 1}
         response = await client.get(
             "/invitations", headers={"Authorization": f"Bearer {token}"}, params=params
         )
 
-        print(response.json())
         assert response.status_code == 200
+        assert len(response.json()) == 1
+
+    @pytest.mark.asyncio
+    async def test_get_invitation_succeeds_using_custom_params(self, token):
+        params = {"from_id": 1, "limit": 1, "reverse": True, "status": "ACCEPTED"}
+        response = await client.get(
+            "/invitations", headers={"Authorization": f"Bearer {token}"}, params=params
+        )
+
+        assert response.status_code == 200
+        assert len(response.json()) == 1
+
+
+class TestAcceptInvitation:
+    @pytest.mark.asyncio
+    async def test_accept_invitation_fails_invitation_DNE(self, token):
+        response = await client.put(
+            "/invitations/420/accept",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 404
+        assert response.json()["detail"] == "invitation with ID '420' does not exist"
+
+    @pytest.mark.asyncio
+    async def test_accept_invitation_fails_not_addressed_to_user(self, token):
+        response = await client.put(
+            "/invitations/1/accept",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 403
+        assert (
+            response.json()["detail"]
+            == "invitation with ID '1' not addressed to user with ID '1'"
+        )
+
+    @pytest.mark.asyncio
+    async def test_accept_invitation_fails_inviter_deleted(self, token):
+        response = await client.put(
+            "/invitations/7/accept",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 404
+        assert (
+            response.json()["detail"]
+            == "user with ID '4' who sent invitation with id '7' does not exist"
+        )
+
+    @pytest.mark.asyncio
+    async def test_accept_invitation_fails_invitation_already_answered(self, token):
+        response = await client.put(
+            "/invitation/2/accept",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 400
+        assert (
+            response.json()["detail"]
+            == "invitation with ID '2' already has 'ACCEPTED' status"
+        )
+
+        # invitation id DNE  X
+        # invitation not addressed to user  X
+        # user who sent invitation is deleted  X
+        # invitation already accepted or declined
