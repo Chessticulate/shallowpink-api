@@ -88,6 +88,12 @@ FAKE_INVITATION_DATA = [
         "game_type": models.GameType.CHESS,
         "status": models.InvitationStatus.PENDING,
     },
+    {
+        "from_id": 2,
+        "to_id": 1,
+        "game_type": models.GameType.CHESS,
+        "status": models.InvitationStatus.PENDING,
+    },
 ]
 
 

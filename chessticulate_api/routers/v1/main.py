@@ -137,7 +137,7 @@ async def get_invitations(
     return [vars(inv) for inv in result]
 
 
-@router.put("/invitations/{invitation_id}/accept", status_code=202)
+@router.put("/invitations/{invitation_id}/accept")
 async def accept_invitation(
     credentials: Annotated[dict, Depends(get_credentials)], invitation_id: int
 ) -> schemas.AcceptInvitationResponse:
@@ -162,7 +162,6 @@ async def accept_invitation(
         )
 
     user = await crud.get_users(id_=invitation.from_id)
-    print(vars(user[0]))
     if user[0].deleted == True:
         raise HTTPException(
             status_code=404,
@@ -172,7 +171,6 @@ async def accept_invitation(
             ),
         )
 
-    print(invitation.status)
     if invitation.status != models.InvitationStatus.PENDING:
         raise HTTPException(
             status_code=400,
@@ -189,12 +187,12 @@ async def accept_invitation(
     return {"game_id": result.id_}
 
 
-@router.post("/invitations/{invitation_id}/decline")
+@router.put("/invitations/{invitation_id}/decline")
 async def decline_invitation(
     credentials: Annotated[dict, Depends(get_credentials)], invitation_id: int
 ):
     """Decline an invitation."""
-    invitation_list = get_invitations(id_=invitation_id)
+    invitation_list = await crud.get_invitations(id_=invitation_id)
 
     if not invitation_list:
         raise HTTPException(
@@ -212,6 +210,16 @@ async def decline_invitation(
             ),
         )
 
+    user = await crud.get_users(id_=invitation.from_id)
+    if user[0].deleted == True:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"user with ID '{invitation.from_id}' who sent invitation with id"
+                f" '{invitation_id}' does not exist"
+            ),
+        )
+
     if invitation.status != models.InvitationStatus.PENDING:
         raise HTTPException(
             status_code=400,
@@ -225,13 +233,13 @@ async def decline_invitation(
         raise HTTPException(status_code=500)
 
 
-@router.post("/invitations/{invitation_id}/cancel")
+@router.put("/invitations/{invitation_id}/cancel")
 async def cancel_invitation(
     credentials: Annotated[dict, Depends(get_credentials)], invitation_id: int
-) -> schemas.AcceptInvitationResponse:
+):
     """Cancel an invitation."""
 
-    invitation_list = crud.get_invitations(id_=invitation_id)
+    invitation_list = await crud.get_invitations(id_=invitation_id)
 
     if not invitation_list:
         raise HTTPException(
@@ -248,6 +256,15 @@ async def cancel_invitation(
                 f" '{credentials['user_id']}'"
             ),
         )
+    user = await crud.get_users(id_=invitation.from_id)
+    if user[0].deleted == True:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"user with ID '{invitation.from_id}' who sent invitation with id"
+                f" '{invitation_id}' does not exist"
+            ),
+        )
 
     if invitation.status != models.InvitationStatus.PENDING:
         raise HTTPException(
@@ -258,5 +275,5 @@ async def cancel_invitation(
             ),
         )
 
-    if not await crud.decline_invitation(invitation_id):
+    if not await crud.cancel_invitation(invitation_id):
         raise HTTPException(status_code=500)

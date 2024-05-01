@@ -227,7 +227,7 @@ class TestGetInvitations:
         [
             {"id_": 42069},
             {"to_id": 42069},
-            {"from_id": 2, "to_id": 1},
+            {"from_id": 2, "to_id": 10},
             {"from_id": 3, "to_id": 1, "status": models.InvitationStatus.PENDING},
         ],
     )
@@ -243,7 +243,7 @@ class TestGetInvitations:
         "query_params,expected_count",
         [
             ({"status": models.InvitationStatus.ACCEPTED}, 3),
-            ({"status": models.InvitationStatus.PENDING}, 1),
+            ({"status": models.InvitationStatus.PENDING}, 3),
             ({"from_id": 1}, 4),
             ({"to_id": 3}, 1),
         ],

@@ -8,6 +8,8 @@ from chessticulate_api.main import app
 
 client = AsyncClient(app=app, base_url="http://test")
 
+# For all tests, user with id = 1 is logged in
+
 
 class TestLogin:
     @pytest.mark.asyncio
@@ -197,6 +199,7 @@ class TestCreateInvitation:
 
         assert response.status_code == 422
 
+    # THIS MIGHT BE AN ISSUE, THIS TEST SHOULD FAIL, USER SHOULDNT BE ABLE TO SEND INVITATION TO SELF
     @pytest.mark.asyncio
     async def test_create_invitation_succeeds(self, token, restore_fake_data_after):
         response = await client.post(
@@ -301,7 +304,7 @@ class TestAcceptInvitation:
     @pytest.mark.asyncio
     async def test_accept_invitation_fails_invitation_already_answered(self, token):
         response = await client.put(
-            "/invitation/2/accept",
+            "/invitations/2/accept",
             headers={"Authorization": f"Bearer {token}"},
         )
 
@@ -311,7 +314,135 @@ class TestAcceptInvitation:
             == "invitation with ID '2' already has 'ACCEPTED' status"
         )
 
-        # invitation id DNE  X
-        # invitation not addressed to user  X
-        # user who sent invitation is deleted  X
-        # invitation already accepted or declined
+    @pytest.mark.asyncio
+    async def test_accept_invitation_succeeds(self, token, restore_fake_data_after):
+        response = await client.put(
+            "/invitations/8/accept",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 200
+        assert response.json()["game_id"]
+
+
+class TestDeclineInvitation:
+    @pytest.mark.asyncio
+    async def test_decline_invitation_fails_invitation_DNE(self, token):
+        response = await client.put(
+            "/invitations/420/decline",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 404
+        assert response.json()["detail"] == "invitation with ID '420' does not exist"
+
+    @pytest.mark.asyncio
+    async def test_decline_invitation_fails_not_addressed_to_user(self, token):
+        response = await client.put(
+            "/invitations/1/decline",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 403
+        assert (
+            response.json()["detail"]
+            == "invitation with ID '1' not addressed to user with ID '1'"
+        )
+
+    @pytest.mark.asyncio
+    async def test_decline_invitation_fails_inviter_deleted(self, token):
+        response = await client.put(
+            "/invitations/7/decline",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 404
+        assert (
+            response.json()["detail"]
+            == "user with ID '4' who sent invitation with id '7' does not exist"
+        )
+
+    @pytest.mark.asyncio
+    async def test_decline_invitation_fails_invitation_already_answered(self, token):
+        response = await client.put(
+            "/invitations/2/decline",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 400
+        assert (
+            response.json()["detail"]
+            == "invitation with ID '2' already has 'ACCEPTED' status"
+        )
+
+    @pytest.mark.asyncio
+    async def test_decline_invitation_succeeds(self, token, restore_fake_data_after):
+        response = await client.put(
+            "/invitations/8/decline",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 200
+
+
+class TestCancelInvitation:
+    @pytest.mark.asyncio
+    async def test_cancel_invitation_fails_invitation_DNE(self, token):
+        response = await client.put(
+            "/invitations/420/cancel",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 404
+        assert response.json()["detail"] == "invitation with ID '420' does not exist"
+
+    @pytest.mark.asyncio
+    async def test_cancel_invitation_fails_user_did_not_create_invitation(self, token):
+        response = await client.put(
+            "/invitations/2/cancel",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 403
+        assert (
+            response.json()["detail"]
+            == "invitation with ID '2' not sent by user with ID '1'"
+        )
+
+    @pytest.mark.asyncio
+    async def test_cancel_invitation_fails_user_deleted(
+        self, token, restore_fake_data_after
+    ):
+        await crud.delete_user(1)
+        response = await client.put(
+            "/invitations/4/cancel",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 404
+        assert (
+            response.json()["detail"]
+            == "user with ID '1' who sent invitation with id '4' does not exist"
+        )
+
+    @pytest.mark.asyncio
+    async def test_cancel_invitation_fails_invitation_already_answered(self, token):
+        response = await client.put(
+            "/invitations/1/cancel",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 400
+        assert (
+            response.json()["detail"]
+            == "invitation with ID '1' already has 'ACCEPTED' status"
+        )
+
+    @pytest.mark.asyncio
+    async def test_cancel_invitation_succeeds(self, token, restore_fake_data_after):
+        response = await client.put(
+            "/invitations/4/cancel",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 200
