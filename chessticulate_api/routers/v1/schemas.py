@@ -13,7 +13,15 @@ import enum
 from datetime import datetime
 from typing import Union
 
-from pydantic import BaseModel, EmailStr, Field, RootModel, SecretStr, StringConstraints
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    EmailStr,
+    Field,
+    RootModel,
+    SecretStr,
+    StringConstraints,
+)
 from pydantic.functional_validators import BeforeValidator
 from typing_extensions import Annotated
 
@@ -30,14 +38,15 @@ class CreateInvitationRequest(BaseModel):
     to_id: int
     game_type: GameTypeEnum = GameTypeEnum.CHESS
 
-    class Config:  # pylint: disable=missing-class-docstring,too-few-public-methods
-        use_enum_values = True
+    model_config = {"use_enum_values": True}
 
 
 class CreateInvitationResponse(BaseModel):
     """pydantic model for invite creation response"""
 
-    id_: int = Field(..., alias="id_")
+    id_: int = Field(
+        ..., validation_alias=AliasChoices("id_", "id"), serialization_alias="id"
+    )
     date_sent: datetime
     date_answered: None
     from_id: int
@@ -46,22 +55,12 @@ class CreateInvitationResponse(BaseModel):
     status: str
 
 
-class DeleteInvitationResponse(BaseModel):
-    """pydantic model for delete invite response"""
-
-    id_: int = Field(..., alias="id")
-    date_sent: str
-    date_answered: str
-    from_id: int
-    to_id: int
-    game_type: str
-    response: str
-
-
 class GetInvitationResponse(BaseModel):
     """pydantic model for get invitation response"""
 
-    id_: int = Field(..., alias="id_")
+    id_: int = Field(
+        ..., validation_alias=AliasChoices("id_", "id"), serialization_alias="id"
+    )
     date_sent: datetime
     date_answered: Union[datetime, None]
     from_id: int
@@ -125,7 +124,9 @@ class CreateUserRequest(BaseModel):
 class GetUserResponse(BaseModel):
     """Pydantic model for get user response."""
 
-    id_: int = Field(..., alias="id_")
+    id_: int = Field(
+        ..., validation_alias=AliasChoices("id_", "id"), serialization_alias="id"
+    )
     name: str
     email: str
     date_joined: datetime

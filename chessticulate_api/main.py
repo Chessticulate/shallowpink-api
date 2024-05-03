@@ -6,18 +6,21 @@ Variables:
     chess_app
 """
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 
 from chessticulate_api import models, routers
 
-app = FastAPI()
 
-
-@app.on_event("startup")
-async def on_startup_and_shutdown():
-    """initialize database with DDL"""
-
+@asynccontextmanager
+async def lifespan():
+    """Setup DB"""
     await models.init_db()
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 app.include_router(routers.v1.router)

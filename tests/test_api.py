@@ -1,12 +1,12 @@
 import jwt
 import pytest
 from fastapi import FastAPI
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 
 from chessticulate_api import crud
 from chessticulate_api.main import app
 
-client = AsyncClient(app=app, base_url="http://test")
+client = AsyncClient(transport=ASGITransport(app=app), base_url="http://test")
 
 # For all tests, user with id = 1 is logged in
 
@@ -104,7 +104,7 @@ class TestGetUsers:
 
         assert response.status_code == 200
         user = response.json()[0]
-        assert user["id_"] == 1
+        assert user["id"] == 1
         assert user["name"] == "fakeuser1"
         assert user["email"] == "fakeuser1@fakeemail.com"
         assert user["wins"] == user["draws"] == user["losses"] == 0
@@ -119,7 +119,7 @@ class TestGetUsers:
         users = response.json()
         assert len(users) == 1
         user = users[0]
-        assert user["id_"] == 2
+        assert user["id"] == 2
         assert user["name"] == "fakeuser2"
         assert user["email"] == "fakeuser2@fakeemail.com"
         assert user["wins"] == user["draws"] == user["losses"] == 0
