@@ -1,10 +1,39 @@
+"""routers.main
+
+fastapi endpoints
+ 
+Functions:
+    get_credentials(credentials: Annotated[]) -> dict
+    login(payload: schemas.LoginRequest) -> schemas.LoginResponse:
+    signup(payload: schemas.CreateUserRequest) -> schemas.CreateUserResponse:
+
+    get_users(credentials: Annotated[], user_id: int, user_name: str,
+        skip: int = 0, limit: int = 10, order_by: str = "date_joined",
+        reverse: bool = False) -> schemas.GetUserListResponse:
+
+    delete_user(credentials: Annotated[dict, Depends(get_credentials)]):
+
+    create_invitation(credentials: Annotated[], payload: 
+        schemas.CreateInvitationRequest) -> schemas.CreateInvitationResponse:
+
+    get_invitations(credentials: Annotated[], to_id: int, from_id: int,
+        invitation_id: int, status: str, skip: int = 0, limit: int = 10,
+        reverse: bool = False) -> schemas.GetInvitationsListResponse:
+
+    accept_invitation(credentials: Annotated[], invitation_id: int)
+        -> schemas.AcceptInvitationResponse:
+
+    decline_invitation(credentials: Annotated[], invitation_id: int)
+    cancel_invitation(credentials: Annotated[], invitation_id: int)
+    
+"""
+
 from typing import Annotated
 
 import jwt
 import sqlalchemy
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security.http import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import SecretStr
 
 from chessticulate_api import crud, models
 from chessticulate_api.routers.v1 import schemas
@@ -20,11 +49,11 @@ async def get_credentials(
     """Retrieve and validate user JWTs. For use in endpoints as dependency."""
     try:
         decoded_token = crud.validate_token(credentials.credentials)
-    except jwt.exceptions.DecodeError:
-        raise HTTPException(status_code=401, detail="invalid token")
-    except jwt.exceptions.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="expired token")
-    if not (user := crud.get_users(id_=decoded_token["user_id"])):
+    except jwt.exceptions.DecodeError as exc:
+        raise HTTPException(status_code=401, detail="invalid token") from exc
+    except jwt.exceptions.ExpiredSignatureError as exc:
+        raise HTTPException(status_code=401, detail="expired token") from exc
+    if not crud.get_users(id_=decoded_token["user_id"]):
         raise HTTPException(status_code=401, detail="user has been deleted")
     return decoded_token
 
@@ -50,8 +79,10 @@ async def signup(payload: schemas.CreateUserRequest) -> schemas.CreateUserRespon
     return vars(user)
 
 
+# pylint: disable=too-many-arguments
 @router.get("/users")
 async def get_users(
+    # pylint: disable=unused-argument
     credentials: Annotated[dict, Depends(get_credentials)],
     user_id: int | None = None,
     user_name: str | None = None,
@@ -101,6 +132,7 @@ async def create_invitation(
     return vars(result)
 
 
+# pylint: disable=too-many-arguments
 @router.get("/invitations")
 async def get_invitations(
     credentials: Annotated[dict, Depends(get_credentials)],
@@ -123,7 +155,8 @@ async def get_invitations(
             detail="'to_id' or 'from_id' must match the requestor's user ID",
         )
 
-    args = {"skip": skip, "limit": limit}
+    args = {"skip": skip, "limit": limit, "reverse": reverse}
+
     if to_id:
         args["to_id"] = to_id
     if from_id:
@@ -162,7 +195,7 @@ async def accept_invitation(
         )
 
     user = await crud.get_users(id_=invitation.from_id)
-    if user[0].deleted == True:
+    if user[0].deleted:
         raise HTTPException(
             status_code=404,
             detail=(
@@ -211,7 +244,7 @@ async def decline_invitation(
         )
 
     user = await crud.get_users(id_=invitation.from_id)
-    if user[0].deleted == True:
+    if user[0].deleted:
         raise HTTPException(
             status_code=404,
             detail=(
@@ -257,7 +290,7 @@ async def cancel_invitation(
             ),
         )
     user = await crud.get_users(id_=invitation.from_id)
-    if user[0].deleted == True:
+    if user[0].deleted:
         raise HTTPException(
             status_code=404,
             detail=(

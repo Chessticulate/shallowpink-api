@@ -86,7 +86,9 @@ class Invitation(Base):  # pylint: disable=too-few-public-methods
     )
 
 
-class Game(Base):  # pylint: disable=too-few-public-methods
+# pylint: disable=not-callable
+# pylint: disable=too-few-public-methods
+class Game(Base):
     """Game SQL Model"""
 
     __tablename__ = "games"
@@ -98,7 +100,7 @@ class Game(Base):  # pylint: disable=too-few-public-methods
     date_started: Mapped[str] = mapped_column(
         DateTime,
         server_default=func.now(),
-        nullable=True,  # pylint: disable=not-callable
+        nullable=True,
     )
     invitation_id: Mapped[int] = mapped_column(
         ForeignKey("invitations.id"), nullable=False

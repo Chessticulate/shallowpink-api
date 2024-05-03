@@ -3,8 +3,7 @@
 CRUD operations
 
 Functions:
-    get_user_by_name(name: str) -> models.User
-    get_user_by_id(id_: str) -> models.User
+    get_users(name: str | id_: str | params) -> list[models.User]
     create_user(name: str, email: str, pswd: SecretStr) -> models.User
     login(name: str, pswd: SecretStr) -> str
     create_invitation(from_: str, to: str, game_type: str = models.GameType.CHESS.value)
