@@ -90,7 +90,6 @@ class TestSignup:
         assert response.status_code == 201
         result = response.json()
         assert result is not None
-        # decoded_token = jwt.decode(result["jwt"], options={"verify_signature": False})
         assert result["name"] == "ChessFan12"
         assert result["email"] == "chessfan@email.com"
         assert result["password"] != "Knightc3!"
@@ -142,12 +141,9 @@ class TestGetUsers:
             "/users", headers={"Authorization": f"Bearer {token}"}, params=params
         )
 
-        # params are being passed correctly, but I dont think they are all being used
-        # reverse and order_by are not working. need to double check get_user crud function
         assert response.status_code == 200
         users = response.json()
         assert len(users) == 3
-        print(users)
 
 
 class TestDeleteUser:
@@ -199,13 +195,24 @@ class TestCreateInvitation:
 
         assert response.status_code == 422
 
-    # THIS MIGHT BE AN ISSUE, THIS TEST SHOULD FAIL, USER SHOULDNT BE ABLE TO SEND INVITATION TO SELF
+    @pytest.mark.asyncio
+    async def test_create_invitation_to_self_fails(
+        self, token, restore_fake_data_after
+    ):
+        response = await client.post(
+            "/invitations",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"to_id": 1, "game_type": "CHESS"},
+        )
+
+        assert response.status_code == 400
+
     @pytest.mark.asyncio
     async def test_create_invitation_succeeds(self, token, restore_fake_data_after):
         response = await client.post(
             "/invitations",
             headers={"Authorization": f"Bearer {token}"},
-            json={"to_id": 1, "game_type": "CHESS"},
+            json={"to_id": 2, "game_type": "CHESS"},
         )
 
         assert response.status_code == 201

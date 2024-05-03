@@ -1,7 +1,7 @@
 """routers.main
 
 fastapi endpoints
- 
+
 Functions:
     get_credentials(credentials: Annotated[]) -> dict
     login(payload: schemas.LoginRequest) -> schemas.LoginResponse:
@@ -13,7 +13,7 @@ Functions:
 
     delete_user(credentials: Annotated[dict, Depends(get_credentials)]):
 
-    create_invitation(credentials: Annotated[], payload: 
+    create_invitation(credentials: Annotated[], payload:
         schemas.CreateInvitationRequest) -> schemas.CreateInvitationResponse:
 
     get_invitations(credentials: Annotated[], to_id: int, from_id: int,
@@ -25,7 +25,7 @@ Functions:
 
     decline_invitation(credentials: Annotated[], invitation_id: int)
     cancel_invitation(credentials: Annotated[], invitation_id: int)
-    
+
 """
 
 from typing import Annotated
@@ -120,6 +120,9 @@ async def create_invitation(
     payload: schemas.CreateInvitationRequest,
 ) -> schemas.CreateInvitationResponse:
     """Send an invitation to a user."""
+    if credentials["user_id"] == payload.to_id:
+        raise HTTPException(status_code=400, detail="cannot invite self")
+
     if not (users := await crud.get_users(id_=payload.to_id)):
         raise HTTPException(status_code=400, detail="addressee does not exist")
 
