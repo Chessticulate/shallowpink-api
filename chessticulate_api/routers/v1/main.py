@@ -53,7 +53,8 @@ async def get_credentials(
         raise HTTPException(status_code=401, detail="invalid token") from exc
     except jwt.exceptions.ExpiredSignatureError as exc:
         raise HTTPException(status_code=401, detail="expired token") from exc
-    if not await crud.get_users(id_=decoded_token["user_id"]):
+    users = await crud.get_users(id_=decoded_token["user_id"])
+    if not users or users[0].deleted:
         raise HTTPException(status_code=401, detail="user has been deleted")
     return decoded_token
 
@@ -108,10 +109,6 @@ async def delete_user(credentials: Annotated[dict, Depends(get_credentials)]):
     """Delete a user. Can only by done by that user on itself."""
     user_id = credentials["user_id"]
     deleted_user = await crud.delete_user(user_id)
-    if not deleted_user:
-        raise HTTPException(
-            status_code=404, detail=f"User with ID '{credentials['user_id']}' not found"
-        )
 
 
 @router.post("/invitations", status_code=201)
@@ -165,7 +162,7 @@ async def get_invitations(
     if from_id:
         args["from_id"] = from_id
     if invitation_id:
-        args["invitation_id"] = invitation_id
+        args["id_"] = invitation_id
     if status:
         args["status"] = status
     result = await crud.get_invitations(**args)
@@ -290,15 +287,6 @@ async def cancel_invitation(
             detail=(
                 f"invitation with ID '{invitation_id}' not sent by user with ID"
                 f" '{credentials['user_id']}'"
-            ),
-        )
-    user = await crud.get_users(id_=invitation.from_id)
-    if user[0].deleted:
-        raise HTTPException(
-            status_code=404,
-            detail=(
-                f"user with ID '{invitation.from_id}' who sent invitation with id"
-                f" '{invitation_id}' does not exist"
             ),
         )
 

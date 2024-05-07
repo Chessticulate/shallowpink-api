@@ -1,16 +1,57 @@
+from datetime import datetime, timedelta, timezone
+
 import jwt
 import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
 from chessticulate_api import crud
+from chessticulate_api.config import CONFIG
 from chessticulate_api.main import app
 
 client = AsyncClient(transport=ASGITransport(app=app), base_url="http://test")
 
-# For all tests, user with id = 1 is logged in
+
+class TestToken:
+    @pytest.mark.asyncio
+    async def test_invalid_token(self):
+        bad_token = "asdf"
+        response = await client.get(
+            "/users", headers={"Authorization": f"Bearer {bad_token}"}
+        )
+
+        assert response.status_code == 401
+        assert response.json()["detail"] == "invalid token"
+
+    @pytest.mark.asyncio
+    async def test_expired_token(self):
+        expired_token = jwt.encode(
+            {
+                "exp": datetime.now(tz=timezone.utc) - timedelta(days=7),
+                "user_name": "fakeuser1",
+                "user_id": 1,
+            },
+            CONFIG.secret,
+        )
+        response = await client.get(
+            "/users", headers={"Authorization": f"Bearer {expired_token}"}
+        )
+
+        assert response.status_code == 401
+        assert response.json()["detail"] == "expired token"
+
+    @pytest.mark.asyncio
+    async def test_invalid_token_user_deleted(self, token, restore_fake_data_after):
+        await crud.delete_user(1)
+        response = await client.get(
+            "/users", headers={"Authorization": f"Bearer {token}"}
+        )
+
+        assert response.status_code == 401
+        assert response.json()["detail"] == "user has been deleted"
 
 
+# For all following tests, user with id = 1 is logged in
 class TestLogin:
     @pytest.mark.asyncio
     async def test_login_with_bad_credentials(self):
@@ -96,6 +137,17 @@ class TestSignup:
 
 
 class TestGetUsers:
+    @pytest.mark.asyncio
+    async def test_get_user_id_DNE(self, token):
+        response = await client.get(
+            "/users?user_id=999",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 200
+        users = response.json()
+        assert len(users) == 0
+
     @pytest.mark.asyncio
     async def test_get_user_by_id(self, token):
         response = await client.get(
@@ -261,6 +313,16 @@ class TestGetInvitations:
         assert len(response.json()) == 1
 
     @pytest.mark.asyncio
+    async def test_get_invitation_succeeds_using_invitation_id(self, token):
+        params = {"to_id": 1, "invitation_id": 2}
+        response = await client.get(
+            "/invitations", headers={"Authorization": f"Bearer {token}"}, params=params
+        )
+
+        assert response.status_code == 200
+        assert len(response.json()) == 1
+
+    @pytest.mark.asyncio
     async def test_get_invitation_succeeds_using_custom_params(self, token):
         params = {"from_id": 1, "limit": 1, "reverse": True, "status": "ACCEPTED"}
         response = await client.get(
@@ -414,22 +476,6 @@ class TestCancelInvitation:
         assert (
             response.json()["detail"]
             == "invitation with ID '2' not sent by user with ID '1'"
-        )
-
-    @pytest.mark.asyncio
-    async def test_cancel_invitation_fails_user_deleted(
-        self, token, restore_fake_data_after
-    ):
-        await crud.delete_user(1)
-        response = await client.put(
-            "/invitations/4/cancel",
-            headers={"Authorization": f"Bearer {token}"},
-        )
-
-        assert response.status_code == 404
-        assert (
-            response.json()["detail"]
-            == "user with ID '1' who sent invitation with id '4' does not exist"
         )
 
     @pytest.mark.asyncio
