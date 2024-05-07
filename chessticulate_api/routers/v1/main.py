@@ -108,7 +108,7 @@ async def get_users(
 async def delete_user(credentials: Annotated[dict, Depends(get_credentials)]):
     """Delete a user. Can only by done by that user on itself."""
     user_id = credentials["user_id"]
-    deleted_user = await crud.delete_user(user_id)
+    await crud.delete_user(user_id)
 
 
 @router.post("/invitations", status_code=201)
