@@ -12,11 +12,11 @@ from chessticulate_api.config import CONFIG
 
 
 class ServerRequestError(Exception):
-    """ Server Request Error Exception class """
+    """Server Request Error Exception class"""
 
 
 class ClientRequestError(Exception):
-    """ CLient Request Error Exception class """
+    """CLient Request Error Exception class"""
 
 
 async def do_move(fen: str, move: str, states: dict[str, str]):
@@ -24,7 +24,8 @@ async def do_move(fen: str, move: str, states: dict[str, str]):
     client = httpx.AsyncClient()
     try:
         response = await client.post(
-            CONFIG.workers_url, json={"fen": fen, "move": move, "states": states}
+            f"{CONFIG.workers_base_url}/move",
+            json={"fen": fen, "move": move, "states": states},
         )
         if response.status_code == 200:
             return response.json()
@@ -49,7 +50,7 @@ async def suggest_move(fen: str, states: dict[str, str]):
     client = httpx.AsyncClient()
     try:
         response = await client.post(
-            CONFIG.workers_url, json={"fen": fen, "states": states}
+            f"{CONFIG.workers_base_url}/suggest", json={"fen": fen, "states": states}
         )
         if response.status_code == 200:
             return response.json()

@@ -20,7 +20,7 @@ class TestDoMove:
     @pytest.mark.asyncio
     async def test_do_move_client_request_exception(self, response_content):
         with respx.mock:
-            respx.post(CONFIG.workers_url).mock(
+            respx.post(CONFIG.workers_base_url).mock(
                 return_value=httpx.Response(400, **response_content)
             )
 
@@ -36,7 +36,7 @@ class TestDoMove:
     @pytest.mark.asyncio
     async def test_do_move_server_request_exception(self, response_content):
         with respx.mock:
-            respx.post(CONFIG.workers_url).mock(
+            respx.post(CONFIG.workers_base_url).mock(
                 return_value=httpx.Response(500, **response_content)
             )
 
@@ -55,12 +55,12 @@ class TestSuggestMove:
     @pytest.mark.asyncio
     async def test_suggest_move_client_request_exception(self, response_content):
         with respx.mock:
-            respx.post(CONFIG.workers_url).mock(
+            respx.post(CONFIG.workers_base_url).mock(
                 return_value=httpx.Response(400, **response_content)
             )
 
             with pytest.raises(workers_service.ClientRequestError):
-                await workers_service.do_move(fen="fen", move="move", states={})
+                await workers_service.suggest_move(fen="fen", states={})
 
     @pytest.mark.parametrize(
         "response_content",
@@ -71,9 +71,9 @@ class TestSuggestMove:
     @pytest.mark.asyncio
     async def test_do_move_server_request_exception(self, response_content):
         with respx.mock:
-            respx.post(CONFIG.workers_url).mock(
+            respx.post(CONFIG.workers_base_url).mock(
                 return_value=httpx.Response(500, **response_content)
             )
 
             with pytest.raises(workers_service.ServerRequestError):
-                await workers_service.do_move(fen="fen", move="move", states={})
+                await workers_service.suggest_move(fen="fen", states={})
