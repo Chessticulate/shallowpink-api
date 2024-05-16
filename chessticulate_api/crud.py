@@ -293,7 +293,7 @@ async def get_games(
         return [row[0] for row in (await session.execute(stmt)).all()]
 
 
-async def do_move(id_: int, user_id: int, move: str, new_state: str) -> bool:
+async def do_move(id_: int, user_id: int, move: str, states: str, fen: str) -> bool:
     """updates game in database using given state"""
 
     async with db.async_session() as session:
@@ -302,11 +302,15 @@ async def do_move(id_: int, user_id: int, move: str, new_state: str) -> bool:
             game_id=id_,
             user_id=user_id,
             movestr=move,
-            fen=new_state,
+            fen=fen,
         )
         session.add(new_move)
 
-        stmt = update(models.Game).where(models.Game.id_ == id_).values(state=new_state)
+        stmt = (
+            update(models.Game)
+            .where(models.Game.id_ == id_)
+            .values(states=states, fen=fen)
+        )
         result = await session.execute(stmt)
         await session.commit()
         return result.rowcount == 1

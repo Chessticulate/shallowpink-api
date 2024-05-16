@@ -14,9 +14,15 @@ from chessticulate_api.config import CONFIG
 class ServerRequestError(Exception):
     """Server Request Error Exception class"""
 
+    def __init__(self, detail: str):
+        self.detail = detail
+
 
 class ClientRequestError(Exception):
     """CLient Request Error Exception class"""
+
+    def __init__(self, detail: str):
+        self.detail = detail
 
 
 async def do_move(fen: str, move: str, states: dict[str, str]):

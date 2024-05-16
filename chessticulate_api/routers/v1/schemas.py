@@ -151,3 +151,9 @@ class AcceptInvitationResponse(BaseModel):
     """Pydantic model for accepting game invitation"""
 
     game_id: int
+
+
+class MoveRequest(BaseModel):
+    """Pydantic model for move endpoint request"""
+
+    move: str

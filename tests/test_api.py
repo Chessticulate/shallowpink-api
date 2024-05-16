@@ -2,12 +2,14 @@ from datetime import datetime, timedelta, timezone
 
 import jwt
 import pytest
-from fastapi import FastAPI
-from httpx import ASGITransport, AsyncClient
+import respx
+from fastapi import FastAPI, HTTPException
+from httpx import ASGITransport, AsyncClient, Response
 
 from chessticulate_api import crud
 from chessticulate_api.config import CONFIG
 from chessticulate_api.main import app
+from chessticulate_api.workers_service import ClientRequestError, ServerRequestError
 
 client = AsyncClient(transport=ASGITransport(app=app), base_url="http://test")
 
@@ -499,3 +501,66 @@ class TestCancelInvitation:
         )
 
         assert response.status_code == 200
+
+
+class TestMove:
+    @pytest.mark.asyncio
+    async def test_do_move_fails_invalid_game_id(self, token):
+        response = await client.put(
+            "/game/42069/move",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"move": "e4"},
+        )
+        assert response.status_code == 404
+        assert response.json()["detail"] == "invalid game id"
+
+    @pytest.mark.asyncio
+    async def test_do_move_fails_user_not_a_player_in_game(self, token):
+        response = await client.put(
+            "/game/3/move",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"move": "e4"},
+        )
+        assert response.status_code == 401
+        assert response.json()["detail"] == "user '1' not a player in game '3'"
+
+    @pytest.mark.asyncio
+    async def test_do_move_fails_not_users_turn(self, token):
+        response = await client.put(
+            "/game/2/move",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"move": "e4"},
+        )
+        assert response.status_code == 400
+        assert response.json()["detail"] == "it is not the turn of user with id '1'"
+
+    @pytest.mark.asyncio
+    async def test_do_move_fails_invalid_move(self, token):
+        # client request errors can be invalid move, puts in check/still in check, or game already over
+        with respx.mock:
+            respx.post(CONFIG.workers_base_url).mock(
+                return_value=Response(400, json={"message": "invalid move"})
+            )
+
+            response = await client.put(
+                "/game/1/move",
+                headers={"Authorization": f"Bearer {token}"},
+                json={"move": "e4"},
+            )
+            assert response.status_code == 400
+            assert response.json()["detail"] == str({"message": "invalid move"})
+
+    @pytest.mark.asyncio
+    async def test_do_move_fails_client_request_error(self, token):
+        # client request errors can be invalid move, puts in check/still in check, or game already over
+        with respx.mock:
+            respx.post(CONFIG.workers_base_url).mock(
+                return_value=Response(400, json={"message": "invalid move"})
+            )
+
+            with pytest.raises(ClientRequestError):
+                response = await client.put(
+                    "/game/1/move",
+                    headers={"Authorization": f"Bearer {token}"},
+                    json={"move": "e4"},
+                )

@@ -35,8 +35,9 @@ import sqlalchemy
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security.http import HTTPAuthorizationCredentials, HTTPBearer
 
-from chessticulate_api import crud, models
+from chessticulate_api import crud, models, workers_service
 from chessticulate_api.routers.v1 import schemas
+from chessticulate_api.workers_service import ClientRequestError, ServerRequestError
 
 router = APIRouter()
 
@@ -301,3 +302,43 @@ async def cancel_invitation(
 
     if not await crud.cancel_invitation(invitation_id):
         raise HTTPException(status_code=500)
+
+
+@router.put("/game/{game_id}/move")
+async def move(
+    credentials: Annotated[dict, Depends(get_credentials)],
+    game_id: str,
+    payload: schemas.MoveRequest,
+):
+    """Attempt a move on a given game"""
+    user_id = credentials["user_id"]
+    games = await crud.get_games(id_=game_id)
+
+    if not games:
+        raise HTTPException(status_code=404, detail="invalid game id")
+
+    game = games[0]
+
+    # pylint: disable=consider-using-in
+    if user_id != game.player_1 and user_id != game.player_2:
+        raise HTTPException(
+            status_code=401, detail=f"user '{user_id}' not a player in game '{game_id}'"
+        )
+
+    if user_id != game.whomst:
+        raise HTTPException(
+            status_code=400, detail=f"it is not the turn of user with id '{user_id}'"
+        )
+
+    try:
+        response = await workers_service.do_move(game.fen, payload.move, game.states)
+    except ClientRequestError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except ServerRequestError as e:
+        raise HTTPException(status_code=500) from e
+
+    states = response["states"]
+    fen = response["fen"]
+
+    # might want to raise 500 here in case game is deleted between get_game and do_move
+    await crud.do_move(game_id, credentials["user_id"], payload.move, states, fen)

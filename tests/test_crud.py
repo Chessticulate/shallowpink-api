@@ -386,37 +386,34 @@ class TestGetGames:
 
 class TestDoMove:
     @pytest.mark.parametrize(
-        "game_id, user_id, move, new_state",
+        "game_id, user_id, move, states, fen",
         [
             (
                 1,
                 1,
                 "e4",
-                (
-                    '{ "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq'
-                    ' e3 0 1", "states": { "-1219502575": "2", "-1950040747": "2",'
-                    ' "1823187191": "1", "1287635123": "1" } }'
-                ),
+                '{ "-1219502575": "2", "-1950040747": "2", "1823187191": "1", "1287635123": "1" }',
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
             ),
         ],
     )
     @pytest.mark.asyncio
     async def test_do_move_succeeds(
-        self, game_id, user_id, move, new_state, restore_fake_data_after
+        self, game_id, user_id, move, states, fen, restore_fake_data_after
     ):
         # assert default game.state
         game = await crud.get_games(id_=game_id)
-        assert (
-            game[0].state
-            == '{ "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",'
-            ' "states": {}}'
-        )
-        await crud.do_move(game_id, user_id, move, new_state)
+        assert game[0].states == "{}"
+        assert game[0].fen == "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+
+        await crud.do_move(game_id, user_id, move, states, fen)
 
         game_after_move = await crud.get_games(id_=game_id)
         assert (
-            game_after_move[0].state
-            == '{ "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",'
-            ' "states": { "-1219502575": "2", "-1950040747": "2", "1823187191": "1",'
-            ' "1287635123": "1" } }'
+            game_after_move[0].fen
+            == "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"
+        )
+        assert (
+            game_after_move[0].states
+            == '{ "-1219502575": "2", "-1950040747": "2", "1823187191": "1", "1287635123": "1" }'
         )

@@ -110,13 +110,15 @@ class Game(Base):
     player_2: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     whomst: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     winner: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=True)
-    state: Mapped[str] = mapped_column(
+    fen: Mapped[str] = mapped_column(
         String,
         nullable=False,
-        server_default=(
-            '{ "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",'
-            ' "states": {}}'
-        ),
+        server_default=("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"),
+    )
+    states: Mapped[str] = mapped_column(
+        String,
+        nullable=False,
+        server_default=("{}"),
     )
 
 
