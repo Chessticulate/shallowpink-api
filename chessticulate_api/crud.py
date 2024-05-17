@@ -293,7 +293,9 @@ async def get_games(
         return [row[0] for row in (await session.execute(stmt)).all()]
 
 
-async def do_move(id_: int, user_id: int, move: str, states: str, fen: str) -> models.Game:
+async def do_move(
+    id_: int, user_id: int, move: str, states: str, fen: str
+) -> models.Game:
     """updates game in database using given state"""
 
     async with db.async_session() as session:
