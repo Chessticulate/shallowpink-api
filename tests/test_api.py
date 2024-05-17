@@ -135,7 +135,6 @@ class TestSignup:
         assert result is not None
         assert result["name"] == "ChessFan12"
         assert result["email"] == "chessfan@email.com"
-        assert result["password"] != "Knightc3!"
 
 
 class TestGetUsers:
@@ -160,7 +159,6 @@ class TestGetUsers:
         user = response.json()[0]
         assert user["id"] == 1
         assert user["name"] == "fakeuser1"
-        assert user["email"] == "fakeuser1@fakeemail.com"
         assert user["wins"] == user["draws"] == user["losses"] == 0
 
     @pytest.mark.asyncio
@@ -175,7 +173,6 @@ class TestGetUsers:
         user = users[0]
         assert user["id"] == 2
         assert user["name"] == "fakeuser2"
-        assert user["email"] == "fakeuser2@fakeemail.com"
         assert user["wins"] == user["draws"] == user["losses"] == 0
 
     @pytest.mark.asyncio
@@ -199,18 +196,28 @@ class TestGetUsers:
         users = response.json()
         assert len(users) == 3
 
+    @pytest.mark.asyncio
+    async def test_get_own_user(self, token):
+        response = await client.get(
+            "/users/self", headers={"Authorization": f"Bearer {token}"}
+        )
+        assert response.status_code == 200
+        user = response.json()
+        assert user["id"] == 1
+        assert user["email"] == "fakeuser1@fakeemail.com"
+
 
 class TestDeleteUser:
     @pytest.mark.asyncio
     async def test_delete_user_fails_not_logged_in(self):
-        response = await client.delete("/users/delete")
+        response = await client.delete("/users/self")
 
         assert response.status_code == 403
 
     @pytest.mark.asyncio
     async def test_delete_user(self, token, restore_fake_data_after):
         response = await client.delete(
-            "/users/delete", headers={"Authorization": f"Bearer {token}"}
+            "/users/self", headers={"Authorization": f"Bearer {token}"}
         )
 
         assert response.status_code == 204
@@ -503,6 +510,32 @@ class TestCancelInvitation:
         assert response.status_code == 200
 
 
+class TestGetGames:
+    @pytest.mark.asyncio
+    async def test_get_games_succeeds_no_params(self, token):
+        response = await client.get(
+            "/games", headers={"Authorization": f"Bearer {token}"}
+        )
+        assert response.status_code == 200
+        assert len(response.json()) == 3
+
+    @pytest.mark.asyncio
+    async def test_get_games_succeeds_params(self, token):
+        response = await client.get(
+            "/games?game_id=1&invitation_id=1&player1_id=1&player2_id=2&whomst_id=1",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        json_obj = response.json()
+
+        assert response.status_code == 200
+        assert len(json_obj) == 1
+        assert json_obj[0]["id"] == 1
+        assert json_obj[0]["invitation_id"] == 1
+        assert json_obj[0]["player_1"] == 1
+        assert json_obj[0]["player_2"] == 2
+        assert json_obj[0]["whomst"] == 1
+
+
 class TestMove:
     @pytest.mark.asyncio
     async def test_do_move_fails_invalid_game_id(self, token):
@@ -521,7 +554,7 @@ class TestMove:
             headers={"Authorization": f"Bearer {token}"},
             json={"move": "e4"},
         )
-        assert response.status_code == 401
+        assert response.status_code == 403
         assert response.json()["detail"] == "user '1' not a player in game '3'"
 
     @pytest.mark.asyncio
@@ -551,16 +584,33 @@ class TestMove:
             assert response.json()["detail"] == str({"message": "invalid move"})
 
     @pytest.mark.asyncio
-    async def test_do_move_fails_client_request_error(self, token):
-        # client request errors can be invalid move, puts in check/still in check, or game already over
+    async def test_do_move_fails_internal_server_error(self, token):
+        # server errors can be caused by e.g. missing parameters in the requests to chess workers api
         with respx.mock:
             respx.post(CONFIG.workers_base_url).mock(
-                return_value=Response(400, json={"message": "invalid move"})
+                return_value=Response(500, json={"message": "missing fen string"})
             )
 
-            with pytest.raises(ClientRequestError):
-                response = await client.put(
-                    "/game/1/move",
-                    headers={"Authorization": f"Bearer {token}"},
-                    json={"move": "e4"},
+            response = await client.put(
+                "/game/1/move",
+                headers={"Authorization": f"Bearer {token}"},
+                json={"move": "e4"},
+            )
+            assert response.status_code == 500
+
+    @pytest.mark.asyncio
+    async def test_do_move_successful(self, token):
+        with respx.mock:
+            respx.post(CONFIG.workers_base_url).mock(
+                return_value=Response(
+                    200, json={"status": "MOVEOK", "fen": "abcdefg", "states": "{}"}
                 )
+            )
+
+            response = await client.put(
+                "/game/1/move",
+                headers={"Authorization": f"Bearer {token}"},
+                json={"move": "e4"},
+            )
+            assert response.status_code == 200
+            assert response.json()["id"] == 1

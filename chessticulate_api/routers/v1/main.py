@@ -5,11 +5,11 @@ fastapi endpoints
 Functions:
     get_credentials(credentials: Annotated[]) -> dict
     login(payload: schemas.LoginRequest) -> schemas.LoginResponse:
-    signup(payload: schemas.CreateUserRequest) -> schemas.CreateUserResponse:
+    signup(payload: schemas.CreateUserRequest) -> schemas.GetOwnUserResponse
 
     get_users(credentials: Annotated[], user_id: int, user_name: str,
         skip: int = 0, limit: int = 10, order_by: str = "date_joined",
-        reverse: bool = False) -> schemas.GetUserListResponse:
+        reverse: bool = False) -> schemas.GetUserListResponse
 
     delete_user(credentials: Annotated[dict, Depends(get_credentials)]):
 
@@ -18,13 +18,20 @@ Functions:
 
     get_invitations(credentials: Annotated[], to_id: int, from_id: int,
         invitation_id: int, status: str, skip: int = 0, limit: int = 10,
-        reverse: bool = False) -> schemas.GetInvitationsListResponse:
+        reverse: bool = False) -> schemas.GetInvitationsListResponse
 
     accept_invitation(credentials: Annotated[], invitation_id: int)
-        -> schemas.AcceptInvitationResponse:
+        -> schemas.AcceptInvitationResponse
 
     decline_invitation(credentials: Annotated[], invitation_id: int)
     cancel_invitation(credentials: Annotated[], invitation_id: int)
+
+    get_games(credentials: Annotated[dict, Depends(get_credentials)],
+        game_id: int | None = None, invitation_id: int | None = None,
+        player1_id: int | None = None, player2_id: int | None = None,
+        whomst_id: int | None = None, winner_id: int | None = None,
+        skip: int = 0, limit: Annotated[int, Field(strict=True, gt=0, le=50)] = 10,
+        reverse: bool = False,) -> schemas.GetGamesListResponse
 
 """
 
@@ -34,6 +41,7 @@ import jwt
 import sqlalchemy
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security.http import HTTPAuthorizationCredentials, HTTPBearer
+from pydantic import Field
 
 from chessticulate_api import crud, models, workers_service
 from chessticulate_api.routers.v1 import schemas
@@ -69,7 +77,7 @@ async def login(payload: schemas.LoginRequest) -> schemas.LoginResponse:
 
 
 @router.post("/signup", status_code=201)
-async def signup(payload: schemas.CreateUserRequest) -> schemas.CreateUserResponse:
+async def signup(payload: schemas.CreateUserRequest) -> schemas.GetOwnUserResponse:
     """Create a new user account."""
     try:
         user = await crud.create_user(payload.name, payload.email, payload.password)
@@ -105,7 +113,16 @@ async def get_users(
     return [vars(user) for user in await crud.get_users(**args)]
 
 
-@router.delete("/users/delete", status_code=204)
+@router.get("/users/self")
+async def get_self(
+    credentials: Annotated[dict, Depends(get_credentials)],
+) -> schemas.GetOwnUserResponse:
+    """Retrieve user info."""
+    user = await crud.get_users(id_=credentials["user_id"])
+    return vars(user[0])
+
+
+@router.delete("/users/self", status_code=204)
 async def delete_user(credentials: Annotated[dict, Depends(get_credentials)]):
     """Delete a user. Can only by done by that user on itself."""
     user_id = credentials["user_id"]
@@ -304,12 +321,46 @@ async def cancel_invitation(
         raise HTTPException(status_code=500)
 
 
+@router.get("/games")
+async def get_games(
+    # pylint: disable=unused-argument
+    credentials: Annotated[dict, Depends(get_credentials)],
+    game_id: int | None = None,
+    invitation_id: int | None = None,
+    player1_id: int | None = None,
+    player2_id: int | None = None,
+    whomst_id: int | None = None,
+    winner_id: int | None = None,
+    skip: int = 0,
+    limit: Annotated[int, Field(strict=True, gt=0, le=50)] = 10,
+    reverse: bool = False,
+) -> schemas.GetGamesListResponse:
+    """Retrieve a list of games"""
+    args = {"skip": skip, "limit": limit, "reverse": reverse}
+
+    if game_id:
+        args["id_"] = game_id
+    if invitation_id:
+        args["invitation_id"] = invitation_id
+    if player1_id:
+        args["player_1"] = player1_id
+    if player2_id:
+        args["player_2"] = player2_id
+    if whomst_id:
+        args["whomst"] = whomst_id
+    if winner_id:
+        args["winner"] = winner_id
+    games = await crud.get_games(**args)
+
+    return [vars(game) for game in games]
+
+
 @router.put("/game/{game_id}/move")
 async def move(
     credentials: Annotated[dict, Depends(get_credentials)],
     game_id: str,
-    payload: schemas.MoveRequest,
-):
+    payload: schemas.DoMoveRequest,
+) -> schemas.GetGameResponse:
     """Attempt a move on a given game"""
     user_id = credentials["user_id"]
     games = await crud.get_games(id_=game_id)
@@ -319,10 +370,9 @@ async def move(
 
     game = games[0]
 
-    # pylint: disable=consider-using-in
-    if user_id != game.player_1 and user_id != game.player_2:
+    if user_id not in [game.player_1, game.player_2]:
         raise HTTPException(
-            status_code=401, detail=f"user '{user_id}' not a player in game '{game_id}'"
+            status_code=403, detail=f"user '{user_id}' not a player in game '{game_id}'"
         )
 
     if user_id != game.whomst:
@@ -339,6 +389,9 @@ async def move(
 
     states = response["states"]
     fen = response["fen"]
+    updated_game = await crud.do_move(
+        game_id, credentials["user_id"], payload.move, states, fen
+    )
 
-    # might want to raise 500 here in case game is deleted between get_game and do_move
-    await crud.do_move(game_id, credentials["user_id"], payload.move, states, fen)
+    print(updated_game)
+    return vars(updated_game)

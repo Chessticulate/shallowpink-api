@@ -11,7 +11,6 @@ Classes:
 
 import enum
 from datetime import datetime
-from typing import Union
 
 from pydantic import (
     AliasChoices,
@@ -48,7 +47,7 @@ class CreateInvitationResponse(BaseModel):
         ..., validation_alias=AliasChoices("id_", "id"), serialization_alias="id"
     )
     date_sent: datetime
-    date_answered: None
+    date_answered: datetime | None
     from_id: int
     to_id: int
     game_type: str
@@ -62,7 +61,7 @@ class GetInvitationResponse(BaseModel):
         ..., validation_alias=AliasChoices("id_", "id"), serialization_alias="id"
     )
     date_sent: datetime
-    date_answered: Union[datetime, None]
+    date_answered: datetime | None
     from_id: int
     to_id: int
     game_type: str
@@ -80,14 +79,6 @@ class LoginResponse(BaseModel):
     """Pydantic model for login responses."""
 
     jwt: str
-
-
-class CreateUserResponse(BaseModel):
-    """Pydantic model for user creation responses."""
-
-    name: str
-    email: str
-    password: str
 
 
 def _validate_password(s: str) -> str:
@@ -128,11 +119,16 @@ class GetUserResponse(BaseModel):
         ..., validation_alias=AliasChoices("id_", "id"), serialization_alias="id"
     )
     name: str
-    email: str
     date_joined: datetime
     wins: int
     draws: int
     losses: int
+
+
+class GetOwnUserResponse(GetUserResponse):
+    """Pydantic model for getting own user info"""
+
+    email: str
 
 
 class GetUserListResponse(RootModel):
@@ -153,7 +149,30 @@ class AcceptInvitationResponse(BaseModel):
     game_id: int
 
 
-class MoveRequest(BaseModel):
+class GetGameResponse(BaseModel):
+    """Pydantic model for get game response"""
+
+    id_: int = Field(
+        ..., validation_alias=AliasChoices("id_", "id"), serialization_alias="id"
+    )
+    game_type: str
+    date_started: datetime
+    invitation_id: int
+    date_ended: datetime | None = None
+    player_1: int
+    player_2: int
+    whomst: int
+    winner: int | None = None
+    fen: str
+
+
+class GetGamesListResponse(RootModel):
+    """Pydantic model for returning a list of GetGameResponses"""
+
+    root: list[GetGameResponse]
+
+
+class DoMoveRequest(BaseModel):
     """Pydantic model for move endpoint request"""
 
     move: str

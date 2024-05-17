@@ -132,8 +132,8 @@ class Move(Base):
     game_id: Mapped[int] = mapped_column(ForeignKey("games.id"), nullable=False)
     timestamp: Mapped[str] = mapped_column(
         DateTime,
-        server_default=func.now(),
-        nullable=True,  # pylint: disable=not-callable
+        server_default=func.now(),  # pylint: disable=not-callable
+        nullable=True,
     )
     movestr: Mapped[str] = mapped_column(String, nullable=False)
     fen: Mapped[str] = mapped_column(String, nullable=False)
