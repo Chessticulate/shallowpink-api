@@ -9,7 +9,7 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project.optional-dependencies]
-dev = ["black", "pylint", "pytest", "pytest-asyncio", "pytest-cov", "isort", "aiosqlite"]
+dev = ["black", "pylint", "pytest", "pytest-asyncio", "pytest-cov", "isort", "aiosqlite", "respx"]
 
 [tool.isort]
 profile = "black"
