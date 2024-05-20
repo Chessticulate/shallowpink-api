@@ -118,6 +118,27 @@ FAKE_GAME_DATA = [
     },
 ]
 
+FAKE_MOVE_DATA = [
+    {
+        "user_id": 1,
+        "game_id": 1,
+        "movestr": "e4",
+        "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
+    },
+    {
+        "user_id": 3,
+        "game_id": 2,
+        "movestr": "Nxe4",
+        "fen": "rnbqkb1r/pp2pppp/3p4/2p5/2B1N3/5N2/PPPP1PPP/R1BQK2R b KQkq - 0 1",
+    },
+    {
+        "user_id": 2,
+        "game_id": 3,
+        "movestr": "bxa2",
+        "fen": "r3kb1r/p3p1pp/1pn2p1n/2p5/1P2q1P1/2P2N2/b2QBP1P/1RB1K2R w Kkq - 0 1",
+    },
+]
+
 
 @pytest.fixture
 def fake_app_secret(scope="session", autouse=True):
@@ -174,6 +195,12 @@ async def _init_fake_data():
         for data in FAKE_GAME_DATA:
             game = models.Game(**data)
             session.add(game)
+        await session.commit()
+
+    async with db.async_session() as session:
+        for data in FAKE_MOVE_DATA:
+            move = models.Move(**data)
+            session.add(move)
         await session.commit()
 
 

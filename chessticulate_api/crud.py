@@ -318,3 +318,22 @@ async def do_move(
         return (
             await session.execute(select(models.Game).where(models.Game.id_ == id_))
         ).one()[0]
+
+
+async def get_moves(
+    *, skip: int = 0, limit: int = 10, reverse: bool = False, **kwargs
+) -> list[models.Move]:
+    """get move from database"""
+
+    async with db.async_session() as session:
+        stmt = select(models.Move)
+        for k, v in kwargs.items():
+            stmt = stmt.where(getattr(models.Move, k) == v)
+
+        if reverse:
+            stmt = stmt.order_by(models.Move.timestamp.desc())
+        else:
+            stmt = stmt.order_by(models.Move.timestamp.asc())
+
+        stmt = stmt.offset(skip).limit(limit)
+        return [row[0] for row in (await session.execute(stmt)).all()]
