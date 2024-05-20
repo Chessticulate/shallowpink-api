@@ -176,3 +176,22 @@ class DoMoveRequest(BaseModel):
     """Pydantic model for move endpoint request"""
 
     move: str
+
+
+class GetMovesResponse(BaseModel):
+    """Pydantic model for get move responses"""
+
+    id_: int = Field(
+        ..., validation_alias=AliasChoices("id_", "id"), serialization_alias="id"
+    )
+    user_id: int
+    game_id: int
+    timestamp: datetime | None = None
+    movestr: str
+    fen: str
+
+
+class GetMovesListResponse(RootModel):
+    """Pydantic model for returning a list of GetMovesResponses"""
+
+    root: list[GetMovesResponse]

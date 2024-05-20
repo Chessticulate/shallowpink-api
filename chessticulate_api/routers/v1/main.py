@@ -393,5 +393,41 @@ async def move(
         game_id, credentials["user_id"], payload.move, states, fen
     )
 
-    print(updated_game)
     return vars(updated_game)
+
+
+@router.get("/moves")
+async def get_moves(
+    credentials: Annotated[dict, Depends(get_credentials)], 
+    move_id: int | None = None,
+    user_id: int | None = None,
+    game_id: int | None = None,
+    skip: int = 0,
+    limit: Annotated[int, Field(strict=True, gt=0, le=50)] = 10,
+    reverse: bool = False,
+) -> schemas.GetMovesListResponse:
+    """Retrieve a list of Moves"""
+
+    if move_id:
+        move = [vars(move) for move in await crud.get_moves(id_=move_id)]
+        if move.user_id != credentials["user_id"]    
+            raise HTTPException(status_code=401, detail=f"user with id '{credentials["user_id"]}' not a player in game")
+
+    args = {"skip": skip, "limit": limit, "reverse": reverse}
+
+    if user_id:
+        if user_id != credentials["user_id"]:
+            raise HTTPException(status_code=401, detail="invalid user_id")
+        args["user_id"] = user_id
+
+    if game_id:
+        game = await crud.get_game(id_=game_id)
+        if credentials["user_id"] != game.player_1 or credentials["user_id"] != game.player_2
+            raise HTTPException(status_code=401, detail=f"user with id '{credentials["user_id"]}' not a player in game")
+        args["game_id"] = game_id
+
+    moves = await crud.get_moves(**args)
+    
+    return [vars(game) for game in games]
+ 
+

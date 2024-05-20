@@ -614,3 +614,8 @@ class TestMove:
             )
             assert response.status_code == 200
             assert response.json()["id"] == 1
+
+class TestGetMoves
+    @pytest.mark.asyncio
+    async def test_get_moves_fails_no_id(self, token):
+
