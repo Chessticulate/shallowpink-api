@@ -398,6 +398,7 @@ async def move(
 
 @router.get("/moves")
 async def get_moves(
+    # pylint: disable=unused-argument
     credentials: Annotated[dict, Depends(get_credentials)],
     move_id: int | None = None,
     user_id: int | None = None,
@@ -407,38 +408,13 @@ async def get_moves(
     reverse: bool = False,
 ) -> schemas.GetMovesListResponse:
     """Retrieve a list of Moves"""
-
-    if not (move_id or user_id or game_id):
-        raise HTTPException(
-            status_code=400, detail="'move_id', 'user_id' or 'game_id' must be provided"
-        )
-
     if move_id:
-        single_move = [vars(move) for move in await crud.get_moves(id_=move_id)]
-        if single_move[0].user_id != credentials["user_id"]:
-            raise HTTPException(
-                status_code=401,
-                detail=f"user with id '{credentials['user_id']}' not a player in game",
-            )
-        return single_move
+        return [vars(move) for move in await crud.get_moves(id_=move_id)]
 
     args = {"skip": skip, "limit": limit, "reverse": reverse}
-
     if user_id:
-        if user_id != credentials["user_id"]:
-            raise HTTPException(status_code=401, detail="invalid user_id")
         args["user_id"] = user_id
-
     if game_id:
-        game = await crud.get_games(id_=game_id)
-        if (
-            credentials["user_id"] != game.player_1
-            or credentials["user_id"] != game.player_2
-        ):
-            raise HTTPException(
-                status_code=401,
-                detail=f"user with id '{credentials['user_id']}' not a player in game",
-            )
         args["game_id"] = game_id
 
     moves = await crud.get_moves(**args)

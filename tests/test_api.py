@@ -618,24 +618,31 @@ class TestMove:
 
 class TestGetMoves:
     @pytest.mark.asyncio
-    async def test_get_moves_fails_no_id(self, token):
+    async def test_get_moves_no_params(self, token):
         response = await client.get(
             "/moves",
             headers={"Authorization": f"Bearer {token}"},
         )
 
-        assert response.status_code == 400
-        assert (
-            response.json()["detail"]
-            == "'move_id', 'user_id' or 'game_id' must be provided"
-        )
+        assert response.status_code == 200
+        assert len(response.json()) == 3
 
     @pytest.mark.asyncio
-    async def test_get_moves_fails_user_id_not_in_game(self, token):
+    async def test_get_moves_with_move_id(self, token):
         response = await client.get(
             "/moves?move_id=3",
             headers={"Authorization": f"Bearer {token}"},
         )
 
-        assert response.status_code == 401
-        assert response.json()["detail"] == "user with id '1' not a player in game"
+        assert response.status_code == 200
+        assert len(response.json()) == 1
+
+    @pytest.mark.asyncio
+    async def test_get_moves_with_game_and_user_id(self, token):
+        response = await client.get(
+            "/moves?game_id=3&user_id=2",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 200
+        assert len(response.json()) == 1
