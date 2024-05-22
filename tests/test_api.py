@@ -599,7 +599,7 @@ class TestMove:
             assert response.status_code == 500
 
     @pytest.mark.asyncio
-    async def test_do_move_successful(self, token):
+    async def test_do_move_successful(self, token, restore_fake_data_after):
         with respx.mock:
             respx.post(CONFIG.workers_base_url).mock(
                 return_value=Response(
