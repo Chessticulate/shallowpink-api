@@ -35,6 +35,7 @@ Functions:
 
 """
 
+import json
 from typing import Annotated
 
 import jwt
@@ -42,6 +43,7 @@ import sqlalchemy
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security.http import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import Field
+from starlette.responses import RedirectResponse
 
 from chessticulate_api import crud, models, workers_service
 from chessticulate_api.routers.v1 import schemas
@@ -66,6 +68,12 @@ async def get_credentials(
     if not users or users[0].deleted:
         raise HTTPException(status_code=401, detail="user has been deleted")
     return decoded_token
+
+
+@router.get("/", include_in_schema=False)
+async def docs_redirect():
+    """Root endpoint"""
+    return RedirectResponse(url="/docs")
 
 
 @router.post("/login")
@@ -381,7 +389,9 @@ async def move(
         )
 
     try:
-        response = await workers_service.do_move(game.fen, payload.move, game.states)
+        response = await workers_service.do_move(
+            game.fen, payload.move, json.loads(game.states)
+        )
     except ClientRequestError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except ServerRequestError as e:
@@ -390,7 +400,7 @@ async def move(
     states = response["states"]
     fen = response["fen"]
     updated_game = await crud.do_move(
-        game_id, credentials["user_id"], payload.move, states, fen
+        game_id, credentials["user_id"], payload.move, json.dumps(states), fen
     )
 
     return vars(updated_game)
