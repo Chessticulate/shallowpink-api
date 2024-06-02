@@ -14,7 +14,7 @@ from chessticulate_api import models, routers
 
 
 @asynccontextmanager
-async def lifespan():
+async def lifespan(*args):  # pylint: disable=unused-argument
     """Setup DB"""
     await models.init_db()
     yield
