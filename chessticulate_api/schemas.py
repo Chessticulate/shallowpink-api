@@ -1,13 +1,4 @@
-"""app.schemas
-
-Pydantic schemas for FastAPI endpoints.
-
-Classes:
-    CreateInvitation
-    LoginResponse
-    CreateUserResponse
-    CreateUserRequest
-"""
+"""chessticulate_api.schemas"""
 
 import enum
 from datetime import datetime

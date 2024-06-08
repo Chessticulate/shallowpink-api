@@ -8,7 +8,7 @@ from httpx import ASGITransport, AsyncClient, Response
 
 from chessticulate_api import crud
 from chessticulate_api.config import CONFIG
-from chessticulate_api.main import app
+from chessticulate_api import app
 from chessticulate_api.workers_service import ClientRequestError, ServerRequestError
 
 client = AsyncClient(transport=ASGITransport(app=app), base_url="http://test")
@@ -33,7 +33,7 @@ class TestToken:
                 "user_name": "fakeuser1",
                 "user_id": 1,
             },
-            CONFIG.secret,
+            CONFIG.jwt_secret,
         )
         response = await client.get(
             "/users", headers={"Authorization": f"Bearer {expired_token}"}

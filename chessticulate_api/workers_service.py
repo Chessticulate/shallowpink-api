@@ -1,10 +1,4 @@
-"""
-service for connecting endpoints with chess-workers
-
-Functions:
-    do_move(fen: str, move: str, states: dict[str, str]):
-    suggest_move(fen: str, states: dict[str, str]):
-"""
+"""chessticulate_api.security"""
 
 import httpx
 
