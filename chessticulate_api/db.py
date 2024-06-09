@@ -1,4 +1,4 @@
-"""app.db"""
+"""chessticulate_api.db"""
 
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 

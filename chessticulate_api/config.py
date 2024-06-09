@@ -12,7 +12,7 @@ class CONFIG:  # pylint: disable=too-few-public-methods
 
     app_name: str = os.environ.get("APP_NAME", "chessticulate-api-dev")
     app_port: int = int(os.environ.get("APP_PORT", 8000))
-    log_level: str = os.environ.get("LOG_LEVEL", "INFO")
+    log_level: str = os.environ.get("LOG_LEVEL", "info")
 
     # "postgresql+asyncpg://<uname>:<pswd>@<hostname>/<dbname>
     sql_conn_str: str = os.environ.get("SQL_CONN_STR", "sqlite+aiosqlite:///:memory:")

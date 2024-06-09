@@ -1,4 +1,4 @@
-"""app.crud"""
+"""chessticulate_api.crud"""
 
 from datetime import datetime, timedelta, timezone
 

@@ -1,18 +1,4 @@
-"""app.models
-
-SQLAlchemy ORM models
-
-Classes:
-    Base
-    GameType
-    User
-    Invitation
-    InvitationStatus
-    Game
-
-Functions:
-    init_db
-"""
+"""chessticulate_api.models"""
 
 import enum
 
