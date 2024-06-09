@@ -1,5 +1,6 @@
 """chessticulate_api.app"""
 
+import importlib
 from contextlib import asynccontextmanager
 
 import sqlalchemy
@@ -7,6 +8,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
 
 from chessticulate_api import crud, models, routers, schemas
+from chessticulate_api.config import CONFIG
 
 
 @asynccontextmanager
@@ -16,7 +18,11 @@ async def lifespan(*args):  # pylint: disable=unused-argument
     yield
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    title=CONFIG.app_name,
+    lifespan=lifespan,
+    version=importlib.metadata.version("chessticulate_api"),
+)
 
 app.include_router(routers.user_router)
 app.include_router(routers.invitation_router)

@@ -11,6 +11,7 @@ class CONFIG:  # pylint: disable=too-few-public-methods
     """Configuration class"""
 
     app_name: str = os.environ.get("APP_NAME", "chessticulate-api-dev")
+    app_host: str = os.environ.get("APP_HOST", "localhost")
     app_port: int = int(os.environ.get("APP_PORT", 8000))
     log_level: str = os.environ.get("LOG_LEVEL", "info")
 

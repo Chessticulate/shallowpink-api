@@ -8,7 +8,10 @@ from chessticulate_api.config import CONFIG
 def main():
     """run API with uvicorn"""
     uvicorn.run(
-        "chessticulate_api:app", port=CONFIG.app_port, log_level=CONFIG.log_level
+        "chessticulate_api:app",
+        host=CONFIG.app_host,
+        port=CONFIG.app_port,
+        log_level=CONFIG.log_level,
     )
 
 
