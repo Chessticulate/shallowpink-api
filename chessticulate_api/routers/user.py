@@ -18,7 +18,7 @@ async def get_users(
     user_id: int | None = None,
     user_name: str | None = None,
     skip: int = 0,
-    limit: Annotated[int, Field(strict=True, gt=0, le=50)] = 10,
+    limit: Annotated[int, Field(gt=0, le=50)] = 10,
     order_by: str = "date_joined",
     reverse: bool = False,
 ) -> schemas.GetUserListResponse:

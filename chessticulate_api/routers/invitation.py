@@ -40,7 +40,7 @@ async def get_invitations(
     invitation_id: int | None = None,
     status: str | None = None,
     skip: int = 0,
-    limit: Annotated[int, Field(strict=True, gt=0, le=50)] = 10,
+    limit: Annotated[int, Field(gt=0, le=50)] = 10,
     reverse: bool = False,
 ) -> schemas.GetInvitationsListResponse:
     """Retrieve a list of invitations."""

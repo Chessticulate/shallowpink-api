@@ -6,9 +6,8 @@ import respx
 from fastapi import FastAPI, HTTPException
 from httpx import ASGITransport, AsyncClient, Response
 
-from chessticulate_api import crud
+from chessticulate_api import app, crud
 from chessticulate_api.config import CONFIG
-from chessticulate_api import app
 from chessticulate_api.workers_service import ClientRequestError, ServerRequestError
 
 client = AsyncClient(transport=ASGITransport(app=app), base_url="http://test")
@@ -539,8 +538,8 @@ class TestGetGames:
 class TestMove:
     @pytest.mark.asyncio
     async def test_do_move_fails_invalid_game_id(self, token):
-        response = await client.put(
-            "/game/42069/move",
+        response = await client.post(
+            "/games/42069/move",
             headers={"Authorization": f"Bearer {token}"},
             json={"move": "e4"},
         )
@@ -549,8 +548,8 @@ class TestMove:
 
     @pytest.mark.asyncio
     async def test_do_move_fails_user_not_a_player_in_game(self, token):
-        response = await client.put(
-            "/game/3/move",
+        response = await client.post(
+            "/games/3/move",
             headers={"Authorization": f"Bearer {token}"},
             json={"move": "e4"},
         )
@@ -559,8 +558,8 @@ class TestMove:
 
     @pytest.mark.asyncio
     async def test_do_move_fails_not_users_turn(self, token):
-        response = await client.put(
-            "/game/2/move",
+        response = await client.post(
+            "/games/2/move",
             headers={"Authorization": f"Bearer {token}"},
             json={"move": "e4"},
         )
@@ -575,8 +574,8 @@ class TestMove:
                 return_value=Response(400, json={"message": "invalid move"})
             )
 
-            response = await client.put(
-                "/game/1/move",
+            response = await client.post(
+                "/games/1/move",
                 headers={"Authorization": f"Bearer {token}"},
                 json={"move": "e4"},
             )
@@ -591,8 +590,8 @@ class TestMove:
                 return_value=Response(500, json={"message": "missing fen string"})
             )
 
-            response = await client.put(
-                "/game/1/move",
+            response = await client.post(
+                "/games/1/move",
                 headers={"Authorization": f"Bearer {token}"},
                 json={"move": "e4"},
             )
@@ -607,8 +606,8 @@ class TestMove:
                 )
             )
 
-            response = await client.put(
-                "/game/1/move",
+            response = await client.post(
+                "/games/1/move",
                 headers={"Authorization": f"Bearer {token}"},
                 json={"move": "e4"},
             )
