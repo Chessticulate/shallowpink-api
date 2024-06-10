@@ -8,4 +8,4 @@ COPY . /code
 
 RUN pip install --no-cache-dir -e .[dev]
 
-CMD ["fastapi", "run", "chessticulate-api/__main__", "--port", "80"]
+CMD ["fastapi", "run", "chessticulate_api/__main__.py", "--port", "80"]
