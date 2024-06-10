@@ -142,7 +142,7 @@ FAKE_MOVE_DATA = [
 
 @pytest.fixture
 def fake_app_secret(scope="session", autouse=True):
-    config.CONFIG.secret = "fake_secret"
+    config.CONFIG.jwt_secret = "fake_secret"
 
 
 @pytest.fixture
@@ -168,7 +168,7 @@ async def token(scope="session"):
 
 async def _init_fake_data():
     db.async_engine = db.create_async_engine(
-        config.CONFIG.conn_str, echo=config.CONFIG.sql_echo
+        config.CONFIG.sql_conn_str, echo=config.CONFIG.sql_echo
     )
     db.async_session = db.async_sessionmaker(db.async_engine, expire_on_commit=False)
     await models.init_db()

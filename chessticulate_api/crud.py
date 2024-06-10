@@ -1,17 +1,4 @@
-"""app.crud
-
-CRUD operations
-
-Functions:
-    get_users(name: str | id_: str | params) -> list[models.User]
-    create_user(name: str, email: str, pswd: SecretStr) -> models.User
-    login(name: str, pswd: SecretStr) -> str
-    create_invitation(from_: str, to: str, game_type: str = models.GameType.CHESS.value)
-        -> models.Invitation
-    get_invitations(*, skip: int = 0, limit: int = 10, reverse: bool = False, **kwargs)
-        -> list[models.Invitation]:
-    validate_token(token: str) -> bool
-"""
+"""chessticulate_api.crud"""
 
 from datetime import datetime, timedelta, timezone
 
@@ -38,11 +25,6 @@ def _check_password(pswd: SecretStr, pswd_hash: str) -> bool:
     )
 
 
-def validate_token(token: str) -> dict:
-    """Validate a JWT."""
-    return jwt.decode(token, CONFIG.secret, CONFIG.algorithm)
-
-
 async def get_users(
     *,
     skip: int = 0,
@@ -50,7 +32,7 @@ async def get_users(
     order_by: str = "date_joined",
     reverse: bool = False,
     **kwargs,
-) -> list[models.Invitation]:
+) -> list[models.User]:
     """
     Retrieve a list of users from DB.
 
@@ -85,6 +67,7 @@ async def create_user(name: str, email: str, pswd: SecretStr) -> models.User:
     Raises a sqlalchemy.exc.IntegrityError if either name or email is already present.
     """
     hashed_pswd = _hash_password(pswd)
+
     async with db.async_session() as session:
         user = models.User(name=name, email=email, password=hashed_pswd)
         session.add(user)
@@ -114,7 +97,7 @@ async def delete_user(id_: int) -> bool:
         return result.rowcount == 1
 
 
-async def login(name: str, pswd: SecretStr) -> str | None:
+async def login(name: str, submitted_pswd: SecretStr) -> str | None:
     """
     Validate user name and password.
 
@@ -126,15 +109,15 @@ async def login(name: str, pswd: SecretStr) -> str | None:
         return None
     user = result[0]
 
-    if not _check_password(pswd, user.password):
+    if not _check_password(submitted_pswd, user.password):
         return None
     return jwt.encode(
         {
-            "exp": datetime.now(tz=timezone.utc) + timedelta(days=CONFIG.token_ttl),
-            "user_name": name,
+            "exp": datetime.now(tz=timezone.utc) + timedelta(days=CONFIG.jwt_ttl),
+            "user_name": user.name,
             "user_id": user.id_,
         },
-        CONFIG.secret,
+        CONFIG.jwt_secret,
     )
 
 

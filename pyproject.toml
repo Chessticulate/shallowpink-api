@@ -1,6 +1,6 @@
 [project]
 name = "chessticulate-api"
-version = "0.2.1"
+version = "0.3.0"
 requires-python = ">=3.9"
 dependencies = ["fastapi[all]", "sqlalchemy >= 2", "httpx", "python-dotenv", "py-bcrypt", "pyjwt", "asyncpg"]
 
@@ -10,6 +10,9 @@ build-backend = "setuptools.build_meta"
 
 [project.optional-dependencies]
 dev = ["black", "pylint", "pytest", "pytest-asyncio", "pytest-cov", "isort", "aiosqlite", "respx"]
+
+[project.scripts]
+chess-api = "chessticulate_api.__main__:main"
 
 [tool.isort]
 profile = "black"

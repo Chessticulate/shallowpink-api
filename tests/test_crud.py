@@ -153,35 +153,6 @@ class TestLogin:
         assert token is not None
 
 
-class TestValidateToken:
-    @pytest.mark.asyncio
-    async def test_validate_token_fails_bad_token(self):
-        with pytest.raises(jwt.exceptions.DecodeError):
-            crud.validate_token("nonsense")
-
-    @pytest.mark.asyncio
-    async def test_validate_token_fails_expired_token(self):
-        token = jwt.encode(
-            {
-                "exp": datetime.now(tz=timezone.utc) - timedelta(days=CONFIG.token_ttl),
-                "user_name": "fakeuser1",
-            },
-            CONFIG.secret,
-        )
-
-        with pytest.raises(jwt.exceptions.ExpiredSignatureError):
-            assert crud.validate_token(token) is not None
-
-    @pytest.mark.asyncio
-    async def test_validate_token_succeeds(self, fake_user_data):
-        token = await crud.login(
-            fake_user_data[0]["name"], SecretStr(fake_user_data[0]["password"])
-        )
-        assert token is not None
-        decoded_token = crud.validate_token(token)
-        assert decoded_token["user_name"] == fake_user_data[0]["name"]
-
-
 class TestCreateInvitation:
     @pytest.mark.asyncio
     async def test_create_invitation_fails_invitor_does_not_exist(self, fake_user_data):
