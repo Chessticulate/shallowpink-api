@@ -19,9 +19,9 @@ class CONFIG:  # pylint: disable=too-few-public-methods
     sql_conn_str: str = os.environ.get("SQL_CONN_STR", "sqlite+aiosqlite:///:memory:")
     sql_echo: bool = os.environ.get("SQL_ECHO") == "TRUE"
 
-    jwt_ttl: int = int(os.environ.get("TOKEN_TTL", 7))
-    jwt_secret: str = os.environ.get("APP_SECRET", "secret")
-    jwt_algo: str = os.environ.get("APP_JWT_ALGO", "HS256")
+    jwt_ttl: int = int(os.environ.get("JWT_TTL", 7))
+    jwt_secret: str = os.environ.get("JWT_SECRET", "secret")
+    jwt_algo: str = os.environ.get("JWT_ALGO", "HS256")
 
     # chess workers service url
     workers_base_url: str = os.environ.get("WORKERS_URL", "http://localhost:3000")
