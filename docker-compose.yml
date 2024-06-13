@@ -1,0 +1,29 @@
+services:
+    
+    api-1:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        ports:
+            - "80:80"
+        environment:
+            - APP_HOST=$APP_HOST 
+            - APP_PORT=$APP_PORT
+            - JWT_SECRET=$JWT_SECRET
+
+    api-2:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        ports:
+            - "81:80"
+        environment:
+            - APP_HOST=$APP_HOST 
+            - APP_PORT=$APP_PORT
+            - JWT_SECRET=$JWT_SECRET
+
+    # web:
+    
+    # workers:
+
+    # db:
