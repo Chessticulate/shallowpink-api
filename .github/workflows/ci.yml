@@ -68,6 +68,7 @@ jobs:
 
     push_to_registry:
         runs-on: ubuntu-latest
+        needs: [format, lint, test, check-version]
         if: github.ref == 'refs/heads/main'
         steps:
             - name: Check out the repo
