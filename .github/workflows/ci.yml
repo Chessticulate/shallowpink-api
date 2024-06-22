@@ -93,5 +93,5 @@ jobs:
                 context: .
                 file: ./Dockerfile
                 push: true
-                tags: ghcr.io/${{ github.repository }}:${{ env.VERSION }}
+                tags: ghcr.io/chessticulate/chessticulate-api:${{ env.VERSION }}
 
