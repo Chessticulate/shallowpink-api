@@ -76,7 +76,7 @@ jobs:
 
             - name: Get version number
               run: |
-                VERSION=$(./get_version.sh)
+                VERSION=$(./scripts/get_version.sh)
                 echo "VERSION=$VERSION" >> $GITHUB_ENV
 
             - name: Log in to registry
