@@ -19,7 +19,7 @@ async def get_moves(
     user_id: int | None = None,
     game_id: int | None = None,
     skip: int = 0,
-    limit: Annotated[int, Field(strict=True, gt=0, le=50)] = 10,
+    limit: Annotated[int, Field(gt=0, le=50)] = 10,
     reverse: bool = False,
 ) -> schemas.GetMovesListResponse:
     """Retrieve a list of Moves"""
