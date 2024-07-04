@@ -23,7 +23,7 @@ async def get_games(
     whomst_id: int | None = None,
     winner_id: int | None = None,
     skip: int = 0,
-    limit: Annotated[int, Field(strict=True, gt=0, le=50)] = 10,
+    limit: Annotated[int, Field(gt=0, le=50)] = 10,
     reverse: bool = False,
 ) -> schemas.GetGamesListResponse:
     """Retrieve a list of games"""
