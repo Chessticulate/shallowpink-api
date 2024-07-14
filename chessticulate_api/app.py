@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 import sqlalchemy
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from chessticulate_api import crud, models, routers, schemas
@@ -22,6 +23,18 @@ app = FastAPI(
     title=CONFIG.app_name,
     lifespan=lifespan,
     version=importlib.metadata.version("chessticulate_api"),
+)
+
+origins = [
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(routers.user_router)
