@@ -161,13 +161,11 @@ class TestCreateInvitation:
         invitee = result[0]
         with pytest.raises(sqlalchemy.exc.IntegrityError):
             invitation = await crud.create_invitation(42069, invitee.id_)
-            print(f"{invitation.from_id=}, {invitation.to_id=}, {invitation.id_=}")
 
     @pytest.mark.asyncio
     async def test_create_invitation_fails_invitee_does_not_exist(self, fake_user_data):
         result = await crud.get_users(name=fake_user_data[0]["name"])
         assert len(result) == 1
-        print(result)
         invitor = result[0]
         with pytest.raises(sqlalchemy.exc.IntegrityError):
             invitation = await crud.create_invitation(invitor.id_, 42069)
@@ -343,16 +341,16 @@ class TestGetGames:
     async def test_get_games_order_by(self):
         games = await crud.get_games(order_by="whomst", limit=3, skip=1)
         assert len(games) == 2
-        assert games[0].whomst == 2
-        assert games[1].whomst == 3
+        assert games[0]["game"].whomst == 2
+        assert games[1]["game"].whomst == 3
 
     @pytest.mark.asyncio
     async def test_get_games_order_by_reverse(self):
         games = await crud.get_games(order_by="whomst", limit=3, reverse=True)
         assert len(games) == 3
-        assert games[0].whomst == 3
-        assert games[1].whomst == 2
-        assert games[2].whomst == 1
+        assert games[0]["game"].whomst == 3
+        assert games[1]["game"].whomst == 2
+        assert games[2]["game"].whomst == 1
 
 
 class TestDoMove:
@@ -374,18 +372,21 @@ class TestDoMove:
     ):
         # assert default game.state
         game = await crud.get_games(id_=game_id)
-        assert game[0].states == "{}"
-        assert game[0].fen == "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        assert game[0]["game"].states == "{}"
+        assert (
+            game[0]["game"].fen
+            == "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        )
 
         await crud.do_move(game_id, user_id, move, states, fen)
 
         game_after_move = await crud.get_games(id_=game_id)
         assert (
-            game_after_move[0].fen
+            game_after_move[0]["game"].fen
             == "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"
         )
         assert (
-            game_after_move[0].states
+            game_after_move[0]["game"].states
             == '{ "-1219502575": "2", "-1950040747": "2", "1823187191": "1", "1287635123": "1" }'
         )
 

@@ -533,6 +533,8 @@ class TestGetGames:
         assert json_obj[0]["player_1"] == 1
         assert json_obj[0]["player_2"] == 2
         assert json_obj[0]["whomst"] == 1
+        assert json_obj[0]["player_1_name"] == "fakeuser1"
+        assert json_obj[0]["player_2_name"] == "fakeuser2"
 
 
 class TestMove:

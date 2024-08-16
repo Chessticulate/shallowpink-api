@@ -152,6 +152,8 @@ class GetGameResponse(BaseModel):
     date_ended: datetime | None = None
     player_1: int
     player_2: int
+    player_1_name: str
+    player_2_name: str
     whomst: int
     winner: int | None = None
     fen: str
@@ -167,6 +169,23 @@ class DoMoveRequest(BaseModel):
     """Pydantic model for move endpoint request"""
 
     move: str
+
+
+class DoMoveResponse(BaseModel):
+    """Pydantic model for get game response"""
+
+    id_: int = Field(
+        ..., validation_alias=AliasChoices("id_", "id"), serialization_alias="id"
+    )
+    game_type: str
+    date_started: datetime
+    invitation_id: int
+    date_ended: datetime | None = None
+    player_1: int
+    player_2: int
+    whomst: int
+    winner: int | None = None
+    fen: str
 
 
 class GetMovesResponse(BaseModel):

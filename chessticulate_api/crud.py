@@ -6,6 +6,7 @@ import bcrypt
 import jwt
 from pydantic import SecretStr
 from sqlalchemy import select, update
+from sqlalchemy.orm import aliased
 
 from chessticulate_api import db, models
 from chessticulate_api.config import CONFIG
@@ -248,7 +249,7 @@ async def get_games(
     order_by: str = "date_started",
     reverse: bool = False,
     **kwargs,
-) -> list[models.Game]:
+) -> list[tuple[models.Game, str, str]]:
     """
     Retrieve a list of games from DB.
 
@@ -260,8 +261,21 @@ async def get_games(
         get_games(player_1=5, skip=0, limit=10)
 
     """
+
+    user_temp1 = aliased(models.User)
+    user_temp2 = aliased(models.User)
+
     async with db.async_session() as session:
-        stmt = select(models.Game)
+        stmt = (
+            select(
+                models.Game,
+                user_temp1.name.label("player_1_name"),
+                user_temp2.name.label("player_2_name"),
+            )
+            .join(user_temp1, models.Game.player_1 == user_temp1.id_)
+            .join(user_temp2, models.Game.player_2 == user_temp2.id_)
+        )
+
         for k, v in kwargs.items():
             stmt = stmt.where(getattr(models.Game, k) == v)
 
@@ -273,7 +287,17 @@ async def get_games(
         stmt = stmt.order_by(order_by_attr)
 
         stmt = stmt.offset(skip).limit(limit)
-        return [row[0] for row in (await session.execute(stmt)).all()]
+
+        result = (await session.execute(stmt)).all()
+
+        return [
+            {
+                "game": game,
+                "player_1_name": player_1_name,
+                "player_2_name": player_2_name,
+            }
+            for game, player_1_name, player_2_name in result
+        ]
 
 
 async def do_move(
