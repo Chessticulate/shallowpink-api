@@ -43,7 +43,16 @@ async def get_games(
         args["winner"] = winner_id
     games = await crud.get_games(**args)
 
-    return [vars(game) for game in games]
+    result = [
+        {
+            **vars(game_data["game"]),
+            "player_1_name": game_data["player_1_name"],
+            "player_2_name": game_data["player_2_name"],
+        }
+        for game_data in games
+    ]
+
+    return result
 
 
 @game_router.post("/{game_id}/move")
@@ -51,7 +60,7 @@ async def move(
     credentials: Annotated[dict, Depends(security.get_credentials)],
     game_id: str,
     payload: schemas.DoMoveRequest,
-) -> schemas.GetGameResponse:
+) -> schemas.DoMoveResponse:
     """Attempt a move on a given game"""
     user_id = credentials["user_id"]
     games = await crud.get_games(id_=game_id)
@@ -59,7 +68,7 @@ async def move(
     if not games:
         raise HTTPException(status_code=404, detail="invalid game id")
 
-    game = games[0]
+    game = games[0]["game"]
 
     if user_id not in [game.player_1, game.player_2]:
         raise HTTPException(
