@@ -355,7 +355,7 @@ class TestGetGames:
 
 class TestDoMove:
     @pytest.mark.parametrize(
-        "game_id, user_id, move, states, fen",
+        "game_id, user_id, move, states, fen, status",
         [
             (
                 1,
@@ -363,12 +363,13 @@ class TestDoMove:
                 "e4",
                 '{ "-1219502575": "2", "-1950040747": "2", "1823187191": "1", "1287635123": "1" }',
                 "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
+                "MOVEOK",
             ),
         ],
     )
     @pytest.mark.asyncio
     async def test_do_move_succeeds(
-        self, game_id, user_id, move, states, fen, restore_fake_data_after
+        self, game_id, user_id, move, states, fen, status, restore_fake_data_after
     ):
         # assert default game.state
         game = await crud.get_games(id_=game_id)
@@ -378,7 +379,7 @@ class TestDoMove:
             == "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         )
 
-        await crud.do_move(game_id, user_id, move, states, fen)
+        await crud.do_move(game_id, user_id, move, states, fen, status)
 
         game_after_move = await crud.get_games(id_=game_id)
         assert (
@@ -389,6 +390,7 @@ class TestDoMove:
             game_after_move[0]["game"].states
             == '{ "-1219502575": "2", "-1950040747": "2", "1823187191": "1", "1287635123": "1" }'
         )
+        assert game_after_move[0]["game"].last_active != None
 
 
 class TestGetMoves:

@@ -89,10 +89,20 @@ async def move(
     except workers_service.ServerRequestError as e:
         raise HTTPException(status_code=500) from e
 
+    # just a boolean to keep track of which color is moving in case move results in a win
+    white_player = True if user_id == game.player_1 else False
+
+    status = response["status"]
     states = response["states"]
     fen = response["fen"]
     updated_game = await crud.do_move(
-        game_id, credentials["user_id"], payload.move, json.dumps(states), fen
+        game_id,
+        credentials["user_id"],
+        payload.move,
+        json.dumps(states),
+        fen,
+        status,
+        white_player,
     )
 
     return vars(updated_game)

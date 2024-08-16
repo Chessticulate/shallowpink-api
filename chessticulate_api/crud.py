@@ -301,7 +301,13 @@ async def get_games(
 
 
 async def do_move(
-    id_: int, user_id: int, move: str, states: str, fen: str
+    id_: int,
+    user_id: int,
+    move: str,
+    states: str,
+    fen: str,
+    status: str,
+    white_player: bool,
 ) -> models.Game:
     """updates game in database using given state"""
 
@@ -314,10 +320,25 @@ async def do_move(
             fen=fen,
         )
         session.add(new_move)
+
+        if status == "GAMEOVER":
+            date_ended = datetime.now()
+            status = (
+                models.GameStatus.WHITEWON
+                if white_player
+                else models.GameStatus.BLACKWON
+            )
+
         stmt = (
             update(models.Game)
             .where(models.Game.id_ == id_)
-            .values(states=states, fen=fen)
+            .values(
+                states=states,
+                fen=fen,
+                last_active=datetime.now(),
+                status=status,
+                date_ended=date_ended,
+            )
         )
         await session.execute(stmt)
         await session.commit()
