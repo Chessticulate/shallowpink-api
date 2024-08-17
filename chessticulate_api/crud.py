@@ -299,7 +299,7 @@ async def get_games(
             for game, player_1_name, player_2_name in result
         ]
 
-
+# pylint: disable=too-many-arguments
 async def do_move(
     id_: int,
     user_id: int,
@@ -321,6 +321,7 @@ async def do_move(
         )
         session.add(new_move)
 
+        # pylint: disable=no-member
         if status == "GAMEOVER":
             date_ended = datetime.now()
             status = (
@@ -328,6 +329,9 @@ async def do_move(
                 if white_player
                 else models.GameStatus.BLACKWON
             )
+        else:
+            date_ended = None
+            status = models.GameStatus.ACTIVE
 
         stmt = (
             update(models.Game)
