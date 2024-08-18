@@ -184,6 +184,7 @@ class DoMoveResponse(BaseModel):
     player_1: int
     player_2: int
     whomst: int
+    status: str
     winner: int | None = None
     fen: str
 

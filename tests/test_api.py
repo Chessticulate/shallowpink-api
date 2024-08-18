@@ -615,6 +615,26 @@ class TestMove:
             )
             assert response.status_code == 200
             assert response.json()["id"] == 1
+            assert response.json()["status"] == "ACTIVE"
+
+    @pytest.mark.asyncio
+    async def test_do_move_successful_game_over(self, token, restore_fake_data_after):
+        with respx.mock:
+            respx.post(CONFIG.workers_base_url).mock(
+                return_value=Response(
+                    200, json={"status": "GAMEOVER", "fen": "abcdefg", "states": "{}"}
+                )
+            )
+
+            response = await client.post(
+                "/games/1/move",
+                headers={"Authorization": f"Bearer {token}"},
+                json={"move": "e4"},
+            )
+            assert response.status_code == 200
+            assert response.json()["id"] == 1
+            assert response.json()["status"] == "GAMEOVER"
+            assert response.json()["winner"] == 1
 
 
 class TestGetMoves:

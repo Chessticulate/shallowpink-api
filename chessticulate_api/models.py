@@ -34,9 +34,7 @@ class GameStatus(enum.Enum):
     """Game Status Enum"""
 
     ACTIVE = "ACTIVE"
-    DRAW = "DRAW"
-    WHITEWINS = "WHITEWINS"
-    BLACKWINS = "BLACKWINS"
+    GAMEOVER = "GAMEOVER"
 
 
 class User(Base):  # pylint: disable=too-few-public-methods
