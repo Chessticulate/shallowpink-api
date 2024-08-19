@@ -89,10 +89,16 @@ async def move(
     except workers_service.ServerRequestError as e:
         raise HTTPException(status_code=500) from e
 
+    status = response["status"]
     states = response["states"]
     fen = response["fen"]
     updated_game = await crud.do_move(
-        game_id, credentials["user_id"], payload.move, json.dumps(states), fen
+        game_id,
+        user_id,
+        payload.move,
+        json.dumps(states),
+        fen,
+        status,
     )
 
     return vars(updated_game)

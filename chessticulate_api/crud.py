@@ -300,8 +300,14 @@ async def get_games(
         ]
 
 
+# pylint: disable=too-many-arguments
 async def do_move(
-    id_: int, user_id: int, move: str, states: str, fen: str
+    id_: int,
+    user_id: int,
+    move: str,
+    states: str,
+    fen: str,
+    status: str,
 ) -> models.Game:
     """updates game in database using given state"""
 
@@ -314,11 +320,33 @@ async def do_move(
             fen=fen,
         )
         session.add(new_move)
-        stmt = (
-            update(models.Game)
-            .where(models.Game.id_ == id_)
-            .values(states=states, fen=fen)
-        )
+
+        # pylint: disable=line-too-long
+        # the way this is now, if a user triggers a draw, then they will be declared the winner.
+        # need to figure out a way to handle a draw
+        if status == "GAMEOVER":
+            stmt = (
+                update(models.Game)
+                .where(models.Game.id_ == id_)
+                .values(
+                    states=states,
+                    fen=fen,
+                    status=models.GameStatus.GAMEOVER,
+                    date_ended=datetime.now(),
+                    winner=user_id,
+                )
+            )
+        else:
+            stmt = (
+                update(models.Game)
+                .where(models.Game.id_ == id_)
+                .values(
+                    states=states,
+                    fen=fen,
+                    last_active=datetime.now(),
+                )
+            )
+
         await session.execute(stmt)
         await session.commit()
 
