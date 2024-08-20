@@ -521,7 +521,7 @@ class TestGetGames:
     @pytest.mark.asyncio
     async def test_get_games_succeeds_params(self, token):
         response = await client.get(
-            "/games?game_id=1&invitation_id=1&player1_id=1&player2_id=2&whomst_id=1",
+            "/games?game_id=1&invitation_id=1&white_id=1&black_id=2&whomst_id=1",
             headers={"Authorization": f"Bearer {token}"},
         )
         json_obj = response.json()
@@ -530,11 +530,11 @@ class TestGetGames:
         assert len(json_obj) == 1
         assert json_obj[0]["id"] == 1
         assert json_obj[0]["invitation_id"] == 1
-        assert json_obj[0]["player_1"] == 1
-        assert json_obj[0]["player_2"] == 2
+        assert json_obj[0]["white"] == 1
+        assert json_obj[0]["black"] == 2
         assert json_obj[0]["whomst"] == 1
-        assert json_obj[0]["player_1_name"] == "fakeuser1"
-        assert json_obj[0]["player_2_name"] == "fakeuser2"
+        assert json_obj[0]["white_player_name"] == "fakeuser1"
+        assert json_obj[0]["black_player_name"] == "fakeuser2"
 
 
 class TestMove:

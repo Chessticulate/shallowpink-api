@@ -209,8 +209,8 @@ async def accept_invitation(id_: int) -> models.Game | None:
 
         invitation.status = models.InvitationStatus.ACCEPTED
         new_game = models.Game(
-            player_1=invitation.from_id,
-            player_2=invitation.to_id,
+            white=invitation.from_id,
+            black=invitation.to_id,
             whomst=invitation.from_id,
             invitation_id=id_,
             game_type=invitation.game_type,
@@ -257,8 +257,8 @@ async def get_games(
         # get game by ID
         get_games(id_=10)
 
-        # list 10 games where player_1 id = 5
-        get_games(player_1=5, skip=0, limit=10)
+        # list 10 games where white id = 5
+        get_games(white=5, skip=0, limit=10)
 
     """
 
@@ -269,11 +269,11 @@ async def get_games(
         stmt = (
             select(
                 models.Game,
-                user_temp1.name.label("player_1_name"),
-                user_temp2.name.label("player_2_name"),
+                user_temp1.name.label("white_player_name"),
+                user_temp2.name.label("black_player_name"),
             )
-            .join(user_temp1, models.Game.player_1 == user_temp1.id_)
-            .join(user_temp2, models.Game.player_2 == user_temp2.id_)
+            .join(user_temp1, models.Game.white == user_temp1.id_)
+            .join(user_temp2, models.Game.black == user_temp2.id_)
         )
 
         for k, v in kwargs.items():
@@ -293,10 +293,10 @@ async def get_games(
         return [
             {
                 "game": game,
-                "player_1_name": player_1_name,
-                "player_2_name": player_2_name,
+                "white_player_name": white_player_name,
+                "black_player_name": black_player_name,
             }
-            for game, player_1_name, player_2_name in result
+            for game, white_player_name, black_player_name in result
         ]
 
 

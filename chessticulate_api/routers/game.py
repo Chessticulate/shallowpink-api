@@ -18,8 +18,8 @@ async def get_games(
     credentials: Annotated[dict, Depends(security.get_credentials)],
     game_id: int | None = None,
     invitation_id: int | None = None,
-    player1_id: int | None = None,
-    player2_id: int | None = None,
+    white_id: int | None = None,
+    black_id: int | None = None,
     whomst_id: int | None = None,
     winner_id: int | None = None,
     skip: int = 0,
@@ -33,10 +33,10 @@ async def get_games(
         args["id_"] = game_id
     if invitation_id:
         args["invitation_id"] = invitation_id
-    if player1_id:
-        args["player_1"] = player1_id
-    if player2_id:
-        args["player_2"] = player2_id
+    if white_id:
+        args["white"] = white_id
+    if black_id:
+        args["black"] = black_id
     if whomst_id:
         args["whomst"] = whomst_id
     if winner_id:
@@ -46,8 +46,8 @@ async def get_games(
     result = [
         {
             **vars(game_data["game"]),
-            "player_1_name": game_data["player_1_name"],
-            "player_2_name": game_data["player_2_name"],
+            "white_player_name": game_data["white_player_name"],
+            "black_player_name": game_data["black_player_name"],
         }
         for game_data in games
     ]
@@ -70,7 +70,7 @@ async def move(
 
     game = games[0]["game"]
 
-    if user_id not in [game.player_1, game.player_2]:
+    if user_id not in [game.white, game.black]:
         raise HTTPException(
             status_code=403, detail=f"user '{user_id}' not a player in game '{game_id}'"
         )
