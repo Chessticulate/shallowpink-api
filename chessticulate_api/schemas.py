@@ -150,10 +150,10 @@ class GetGameResponse(BaseModel):
     date_started: datetime
     invitation_id: int
     date_ended: datetime | None = None
-    player_1: int
-    player_2: int
-    player_1_name: str
-    player_2_name: str
+    white: int
+    black: int
+    white_player_name: str
+    black_player_name: str
     whomst: int
     winner: int | None = None
     fen: str
@@ -181,8 +181,8 @@ class DoMoveResponse(BaseModel):
     date_started: datetime
     invitation_id: int
     date_ended: datetime | None = None
-    player_1: int
-    player_2: int
+    white: int
+    black: int
     whomst: int
     status: str
     winner: int | None = None

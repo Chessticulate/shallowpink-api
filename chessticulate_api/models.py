@@ -100,8 +100,8 @@ class Game(Base):
     )
     date_ended: Mapped[str] = mapped_column(DateTime, nullable=True)
     last_active: Mapped[str] = mapped_column(DateTime, nullable=True)
-    player_1: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
-    player_2: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    white: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    black: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     whomst: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     winner: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=True)
     status: Mapped[str] = mapped_column(

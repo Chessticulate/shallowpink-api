@@ -100,20 +100,20 @@ FAKE_INVITATION_DATA = [
 FAKE_GAME_DATA = [
     {
         "invitation_id": 1,
-        "player_1": 1,
-        "player_2": 2,
+        "white": 1,
+        "black": 2,
         "whomst": 1,
     },
     {
         "invitation_id": 2,
-        "player_1": 3,
-        "player_2": 1,
+        "white": 3,
+        "black": 1,
         "whomst": 3,
     },
     {
         "invitation_id": 3,
-        "player_1": 2,
-        "player_2": 3,
+        "white": 2,
+        "black": 3,
         "whomst": 2,
     },
 ]

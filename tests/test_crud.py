@@ -304,8 +304,8 @@ class TestAcceptInvitation:
 
         assert game is not None
         assert game.invitation_id == invitation.id_
-        assert game.player_1 == invitation.from_id
-        assert game.player_2 == invitation.to_id
+        assert game.white == invitation.from_id
+        assert game.black == invitation.to_id
 
 
 class TestGetGames:
@@ -313,8 +313,8 @@ class TestGetGames:
         "query_params",
         [
             {"id_": 42069},
-            {"player_1": 1234},
-            {"player_2": 1, "player_1": -1},
+            {"white": 1234},
+            {"black": 1, "white": -1},
             {"whomst": 6},
             {"winner": 10},
         ],
@@ -328,8 +328,8 @@ class TestGetGames:
         "query_params,expected_count",
         [
             ({"id_": 2}, 1),
-            ({"player_1": 3}, 1),
-            ({"player_1": 2, "player_2": 3}, 1),
+            ({"white": 3}, 1),
+            ({"white": 2, "black": 3}, 1),
         ],
     )
     @pytest.mark.asyncio
