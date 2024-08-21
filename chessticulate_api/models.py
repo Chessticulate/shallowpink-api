@@ -37,6 +37,21 @@ class GameStatus(enum.Enum):
     GAMEOVER = "GAMEOVER"
 
 
+class GameResult(enum.Enum):
+    """Game Result Enum"""
+
+    CHECKMATE = "CHECKMATE"
+    STALEMATE = "STALEMATE"
+    INSUFFICIENTMATERIAL = "INSUFFICIENTMATERIAL"
+    THREEFOLDREPETITION = "THREEFOLDREPETITION"
+    FIFTYMOVERULE = "FIFTYMOVERULE"
+
+    # not returned by shallowpink
+    DRAWBYAGREEMENT = "DRAWBYAGREEMENT"
+    RESIGNATION = "RESIGNATION"
+    TIMEOUT = "TIMEOUT"
+
+
 class User(Base):  # pylint: disable=too-few-public-methods
     """User SQL Model"""
 
@@ -104,6 +119,10 @@ class Game(Base):
     black: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     whomst: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     winner: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=True)
+    result: Mapped[str] = mapped_column(
+        Enum(GameResult),
+        nullable=True,
+    )
     status: Mapped[str] = mapped_column(
         Enum(GameStatus),
         nullable=False,

@@ -181,10 +181,12 @@ class DoMoveResponse(BaseModel):
     date_started: datetime
     invitation_id: int
     date_ended: datetime | None = None
+    last_active: datetime | None = None
     white: int
     black: int
     whomst: int
     status: str
+    result: str | None = None
     winner: int | None = None
     fen: str
 
