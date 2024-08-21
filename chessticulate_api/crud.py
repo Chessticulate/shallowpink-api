@@ -321,31 +321,46 @@ async def do_move(
         )
         session.add(new_move)
 
-        # pylint: disable=line-too-long
-        # the way this is now, if a user triggers a draw, then they will be declared the winner.
-        # need to figure out a way to handle a draw
-        if status == "GAMEOVER":
-            stmt = (
-                update(models.Game)
-                .where(models.Game.id_ == id_)
-                .values(
-                    states=states,
-                    fen=fen,
-                    status=models.GameStatus.GAMEOVER,
-                    date_ended=datetime.now(),
-                    winner=user_id,
-                )
+        # pylint: disable=consider-using-in
+        try:
+            # throws value error if status not in GameResult
+            status_enum = models.GameResult(status)
+            if status_enum in models.GameResult:
+                result = status_enum
+                status = models.GameStatus.GAMEOVER
+                date_ended = datetime.now()
+                last_active = date_ended
+
+                if (
+                    status_enum == models.GameResult.CHECKMATE
+                    or status_enum == models.GameResult.RESIGNATION
+                    or status_enum == models.GameResult.TIMEOUT
+                ):
+                    winner = user_id
+                else:
+                    winner = None
+        except ValueError:
+
+            if status == "MOVEOK" or status == "CHECK":
+                status = models.GameStatus.ACTIVE
+                result = None
+                date_ended = None
+                winner = None
+                last_active = datetime.now()
+
+        stmt = (
+            update(models.Game)
+            .where(models.Game.id_ == id_)
+            .values(
+                states=states,
+                fen=fen,
+                status=status,
+                result=result,
+                last_active=last_active,
+                date_ended=date_ended,
+                winner=winner,
             )
-        else:
-            stmt = (
-                update(models.Game)
-                .where(models.Game.id_ == id_)
-                .values(
-                    states=states,
-                    fen=fen,
-                    last_active=datetime.now(),
-                )
-            )
+        )
 
         await session.execute(stmt)
         await session.commit()

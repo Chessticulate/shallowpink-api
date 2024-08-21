@@ -613,6 +613,7 @@ class TestMove:
                 headers={"Authorization": f"Bearer {token}"},
                 json={"move": "e4"},
             )
+
             assert response.status_code == 200
             assert response.json()["id"] == 1
             assert response.json()["status"] == "ACTIVE"
@@ -622,7 +623,7 @@ class TestMove:
         with respx.mock:
             respx.post(CONFIG.workers_base_url).mock(
                 return_value=Response(
-                    200, json={"status": "GAMEOVER", "fen": "abcdefg", "states": "{}"}
+                    200, json={"status": "CHECKMATE", "fen": "abcdefg", "states": "{}"}
                 )
             )
 
@@ -631,9 +632,13 @@ class TestMove:
                 headers={"Authorization": f"Bearer {token}"},
                 json={"move": "e4"},
             )
+
             assert response.status_code == 200
             assert response.json()["id"] == 1
             assert response.json()["status"] == "GAMEOVER"
+            assert response.json()["result"] == "CHECKMATE"
+            assert response.json()["date_ended"] != None
+            assert response.json()["last_active"] != None
             assert response.json()["winner"] == 1
 
 
