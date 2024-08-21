@@ -341,12 +341,9 @@ async def do_move(
                 or status_enum == models.GameResult.TIMEOUT
             ):
                 winner = user_id
-            else:
-                winner = None
 
         except ValueError:
             # status is either MOVEOK or CHECK if its not in GameResult
-
             status = models.GameStatus.ACTIVE
             last_active = datetime.now()
 
