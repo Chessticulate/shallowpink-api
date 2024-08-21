@@ -321,32 +321,34 @@ async def do_move(
         )
         session.add(new_move)
 
+        result = None
+        winner = None
+        date_ended = None
+        last_active = None
+
         # pylint: disable=consider-using-in
         try:
             # throws value error if status not in GameResult
             status_enum = models.GameResult(status)
-            if status_enum in models.GameResult:
-                result = status_enum
-                status = models.GameStatus.GAMEOVER
-                date_ended = datetime.now()
-                last_active = date_ended
+            result = status_enum
+            status = models.GameStatus.GAMEOVER
+            date_ended = datetime.now()
+            last_active = date_ended
 
-                if (
-                    status_enum == models.GameResult.CHECKMATE
-                    or status_enum == models.GameResult.RESIGNATION
-                    or status_enum == models.GameResult.TIMEOUT
-                ):
-                    winner = user_id
-                else:
-                    winner = None
-        except ValueError:
-
-            if status == "MOVEOK" or status == "CHECK":
-                status = models.GameStatus.ACTIVE
-                result = None
-                date_ended = None
+            if (
+                status_enum == models.GameResult.CHECKMATE
+                or status_enum == models.GameResult.RESIGNATION
+                or status_enum == models.GameResult.TIMEOUT
+            ):
+                winner = user_id
+            else:
                 winner = None
-                last_active = datetime.now()
+
+        except ValueError:
+            # status is either MOVEOK or CHECK if its not in GameResult
+
+            status = models.GameStatus.ACTIVE
+            last_active = datetime.now()
 
         stmt = (
             update(models.Game)
