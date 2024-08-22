@@ -323,29 +323,23 @@ async def do_move(
 
         result = None
         winner = None
-        date_ended = None
-        last_active = None
 
         # pylint: disable=consider-using-in
-        try:
+        if status in vars(models.GameResult):
             # throws value error if status not in GameResult
-            status_enum = models.GameResult(status)
-            result = status_enum
-            status = models.GameStatus.GAMEOVER
-            date_ended = datetime.now()
-            last_active = date_ended
+            result = status
+            is_active = False
 
             if (
-                status_enum == models.GameResult.CHECKMATE
-                or status_enum == models.GameResult.RESIGNATION
-                or status_enum == models.GameResult.TIMEOUT
+                status == models.GameResult.CHECKMATE
+                or status == models.GameResult.RESIGNATION
+                or status == models.GameResult.TIMEOUT
             ):
                 winner = user_id
 
-        except ValueError:
+        else:
             # status is either MOVEOK or CHECK if its not in GameResult
-            status = models.GameStatus.ACTIVE
-            last_active = datetime.now()
+            is_active = True
 
         stmt = (
             update(models.Game)
@@ -353,10 +347,9 @@ async def do_move(
             .values(
                 states=states,
                 fen=fen,
-                status=status,
+                is_active=is_active,
                 result=result,
-                last_active=last_active,
-                date_ended=date_ended,
+                last_active=datetime.now(),
                 winner=winner,
             )
         )
@@ -372,7 +365,7 @@ async def do_move(
 async def get_moves(
     *, skip: int = 0, limit: int = 10, reverse: bool = False, **kwargs
 ) -> list[models.Move]:
-    """get move from database"""
+    """Get move(s) from database"""
 
     async with db.async_session() as session:
         stmt = select(models.Move)
@@ -386,3 +379,32 @@ async def get_moves(
 
         stmt = stmt.offset(skip).limit(limit)
         return [row[0] for row in (await session.execute(stmt)).all()]
+
+
+async def forfeit(id_, user_id, status):
+    """Forefeit game"""
+
+    async with db.async_session() as session:
+        game_list = await get_games(id_=id_)
+        game = game_list[0]["game"]
+        winner = game.white if user_id == game.black else game.black
+
+        stmt = (
+            update(models.Game)
+            .where(models.Game.id_ == id_)
+            .values(
+                winner=winner,
+                result=status,
+                is_active=False,
+                last_active=datetime.now(),
+            )
+        )
+
+        await session.execute(stmt)
+        await session.commit()
+
+        # maybe this should return a call to get_games
+        # so usernames are included in response
+        return (
+            await session.execute(select(models.Game).where(models.Game.id_ == id_))
+        ).one()[0]

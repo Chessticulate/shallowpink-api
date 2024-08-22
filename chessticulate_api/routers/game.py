@@ -62,6 +62,7 @@ async def move(
     payload: schemas.DoMoveRequest,
 ) -> schemas.DoMoveResponse:
     """Attempt a move on a given game"""
+
     user_id = credentials["user_id"]
     games = await crud.get_games(id_=game_id)
 
@@ -102,3 +103,29 @@ async def move(
     )
 
     return vars(updated_game)
+
+
+@game_router.post("/{game_id}/forfeit")
+async def forfeit(
+    credentials: Annotated[dict, Depends(security.get_credentials)],
+    game_id: str,
+    payload: schemas.ForfeitRequest,
+) -> schemas.ForfeitResponse:
+    """Forfeit a given game"""
+
+    user_id = credentials["user_id"]
+    games = await crud.get_games(id_=game_id)
+
+    if not games:
+        raise HTTPException(status_code=404, detail="invalid game id")
+
+    game = games[0]["game"]
+
+    if user_id not in [game.white, game.black]:
+        raise HTTPException(
+            status_code=403, detail=f"user '{user_id}' not a player in game '{game_id}'"
+        )
+
+    quiter = await crud.forfeit(game_id, user_id, payload.status)
+
+    return vars(quiter)

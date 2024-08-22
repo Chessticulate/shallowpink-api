@@ -21,7 +21,7 @@ class GameType(enum.Enum):
     CHESS = "CHESS"
 
 
-class InvitationStatus(enum.Enum):
+class InvitationStatus(enum.StrEnum):
     """Invitation Response Enum"""
 
     ACCEPTED = "ACCEPTED"
@@ -30,14 +30,7 @@ class InvitationStatus(enum.Enum):
     CANCELLED = "CANCELLED"
 
 
-class GameStatus(enum.Enum):
-    """Game Status Enum"""
-
-    ACTIVE = "ACTIVE"
-    GAMEOVER = "GAMEOVER"
-
-
-class GameResult(enum.Enum):
+class GameResult(enum.StrEnum):
     """Game Result Enum"""
 
     CHECKMATE = "CHECKMATE"
@@ -113,20 +106,17 @@ class Game(Base):
     invitation_id: Mapped[int] = mapped_column(
         ForeignKey("invitations.id"), nullable=False
     )
-    date_ended: Mapped[str] = mapped_column(DateTime, nullable=True)
     last_active: Mapped[str] = mapped_column(DateTime, nullable=True)
     white: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     black: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     whomst: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     winner: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=True)
+    is_active: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=sql.true()
+    )
     result: Mapped[str] = mapped_column(
         Enum(GameResult),
         nullable=True,
-    )
-    status: Mapped[str] = mapped_column(
-        Enum(GameStatus),
-        nullable=False,
-        server_default=GameStatus.ACTIVE.value,
     )
     fen: Mapped[str] = mapped_column(
         String,

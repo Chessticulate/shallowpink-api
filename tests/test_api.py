@@ -616,7 +616,7 @@ class TestMove:
 
             assert response.status_code == 200
             assert response.json()["id"] == 1
-            assert response.json()["status"] == "ACTIVE"
+            assert response.json()["is_active"] == True
 
     @pytest.mark.asyncio
     async def test_do_move_successful_game_over(self, token, restore_fake_data_after):
@@ -635,9 +635,8 @@ class TestMove:
 
             assert response.status_code == 200
             assert response.json()["id"] == 1
-            assert response.json()["status"] == "GAMEOVER"
+            assert response.json()["is_active"] == False
             assert response.json()["result"] == "CHECKMATE"
-            assert response.json()["date_ended"] != None
             assert response.json()["last_active"] != None
             assert response.json()["winner"] == 1
 
@@ -672,3 +671,19 @@ class TestGetMoves:
 
         assert response.status_code == 200
         assert len(response.json()) == 1
+
+
+class TestForfeit:
+
+    @pytest.mark.asyncio
+    async def test_forfeit_succeeds(self, token, restore_fake_data_after):
+        response = await client.post(
+            "/games/1/forfeit",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"status": "RESIGNATION"},
+        )
+
+        assert response.status_code == 200
+        assert response.json()["id"] == 1
+        assert response.json()["is_active"] == False
+        assert response.json()["result"] == "RESIGNATION"

@@ -398,10 +398,9 @@ class TestDoMove:
             == '{ "-1219502575": "2", "-1950040747": "2", "1823187191": "1", "1287635123": "1" }'
         )
         assert game_after_move[0]["game"].last_active != None
-        assert game_after_move[0]["game"].date_ended == None
         assert game_after_move[0]["game"].winner == None
         assert game_after_move[0]["game"].result == None
-        assert game_after_move[0]["game"].status == models.GameStatus.ACTIVE
+        assert game_after_move[0]["game"].is_active == True
 
     @pytest.mark.parametrize(
         "game_id, user_id, move, states, fen, status",
@@ -434,9 +433,8 @@ class TestDoMove:
         game_after_move = await crud.get_games(id_=game_id)
 
         assert game_after_move[0]["game"].last_active != None
-        assert game_after_move[0]["game"].date_ended != None
         assert game_after_move[0]["game"].winner == user_id
-        assert game_after_move[0]["game"].status == models.GameStatus.GAMEOVER
+        assert game_after_move[0]["game"].is_active == False
         assert game_after_move[0]["game"].result == models.GameResult.CHECKMATE
 
 

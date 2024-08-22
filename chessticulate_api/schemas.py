@@ -148,13 +148,15 @@ class GetGameResponse(BaseModel):
     )
     game_type: str
     date_started: datetime
+    last_active: datetime | None = None
     invitation_id: int
-    date_ended: datetime | None = None
     white: int
     black: int
     white_player_name: str
     black_player_name: str
     whomst: int
+    is_active: bool
+    result: str | None = None
     winner: int | None = None
     fen: str
 
@@ -180,12 +182,11 @@ class DoMoveResponse(BaseModel):
     game_type: str
     date_started: datetime
     invitation_id: int
-    date_ended: datetime | None = None
     last_active: datetime | None = None
     white: int
     black: int
     whomst: int
-    status: str
+    is_active: bool
     result: str | None = None
     winner: int | None = None
     fen: str
@@ -208,3 +209,28 @@ class GetMovesListResponse(RootModel):
     """Pydantic model for returning a list of GetMovesResponses"""
 
     root: list[GetMovesResponse]
+
+
+class ForfeitRequest(BaseModel):
+    """Pydantic model for forfeit game requests"""
+
+    status: str
+
+
+class ForfeitResponse(BaseModel):
+    """Pydantic model for forfeit game response"""
+
+    id_: int = Field(
+        ..., validation_alias=AliasChoices("id_", "id"), serialization_alias="id"
+    )
+    game_type: str
+    date_started: datetime
+    last_active: datetime | None = None
+    invitation_id: int
+    white: int
+    black: int
+    whomst: int
+    is_active: bool
+    result: str | None = None
+    winner: int | None = None
+    fen: str
