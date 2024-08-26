@@ -301,6 +301,7 @@ class TestAcceptInvitation:
         assert len(result) == 1
         invitation = result[0]
         assert invitation.status == models.InvitationStatus.ACCEPTED
+        assert invitation.date_answered != None
 
         assert game is not None
         assert game.invitation_id == invitation.id_
