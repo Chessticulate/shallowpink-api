@@ -208,6 +208,7 @@ async def accept_invitation(id_: int) -> models.Game | None:
             return None
 
         invitation.status = models.InvitationStatus.ACCEPTED
+        invitation.date_answered = datetime.now()
         new_game = models.Game(
             white=invitation.from_id,
             black=invitation.to_id,
@@ -235,7 +236,9 @@ async def decline_invitation(id_: int) -> bool:
                 models.Invitation.id_ == id_,
                 models.Invitation.status == models.InvitationStatus.PENDING,
             )
-            .values(status=models.InvitationStatus.DECLINED)
+            .values(
+                status=models.InvitationStatus.DECLINED, date_answered=datetime.now()
+            )
         )
         result = await session.execute(stmt)
         await session.commit()
