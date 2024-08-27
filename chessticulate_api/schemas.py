@@ -55,6 +55,8 @@ class GetInvitationResponse(BaseModel):
     date_answered: datetime | None
     from_id: int
     to_id: int
+    white_username: str
+    black_username: str
     game_type: str
     status: str
 
@@ -152,8 +154,8 @@ class GetGameResponse(BaseModel):
     invitation_id: int
     white: int
     black: int
-    white_player_name: str
-    black_player_name: str
+    white_username: str
+    black_username: str
     whomst: int
     is_active: bool
     result: str | None = None
