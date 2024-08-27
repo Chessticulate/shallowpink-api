@@ -238,14 +238,14 @@ class TestCancelInvitation:
     async def test_cancel_invitation_succeeds(self, restore_fake_data_after, id_):
         result = await crud.get_invitations(id_=id_)
         assert len(result) == 1
-        invitation = result[0]
+        invitation = result[0]["invitation"]
 
         assert invitation.status == models.InvitationStatus.PENDING
         assert await crud.cancel_invitation(id_) is True
 
         result = await crud.get_invitations(id_=id_)
         assert len(result) == 1
-        invitation = result[0]
+        invitation = result[0]["invitation"]
 
         assert invitation.status == models.InvitationStatus.CANCELLED
 
@@ -265,14 +265,14 @@ class TestDeclineInvitation:
     async def test_decline_invitation_succeeds(self, restore_fake_data_after, id_):
         result = await crud.get_invitations(id_=id_)
         assert len(result) == 1
-        invitation = result[0]
+        invitation = result[0]["invitation"]
 
         assert invitation.status == models.InvitationStatus.PENDING
         assert await crud.decline_invitation(id_) is True
 
         result = await crud.get_invitations(id_=id_)
         assert len(result) == 1
-        invitation = result[0]
+        invitation = result[0]["invitation"]
 
         assert invitation.status == models.InvitationStatus.DECLINED
 
@@ -292,14 +292,14 @@ class TestAcceptInvitation:
     async def test_accept_invitation_succeeds(self, restore_fake_data_after, id_):
         result = await crud.get_invitations(id_=id_)
         assert len(result) == 1
-        invitation = result[0]
+        invitation = result[0]["invitation"]
         assert invitation.status == models.InvitationStatus.PENDING
 
         game = await crud.accept_invitation(id_)
 
         result = await crud.get_invitations(id_=id_)
         assert len(result) == 1
-        invitation = result[0]
+        invitation = result[0]["invitation"]
         assert invitation.status == models.InvitationStatus.ACCEPTED
         assert invitation.date_answered != None
 

@@ -329,6 +329,8 @@ class TestGetInvitations:
 
         assert response.status_code == 200
         assert len(response.json()) == 1
+        assert response.json()[0]["white_username"] == "fakeuser1"
+        assert response.json()[0]["black_username"] == "fakeuser3"
 
     @pytest.mark.asyncio
     async def test_get_invitation_succeeds_using_custom_params(self, token):
@@ -533,8 +535,8 @@ class TestGetGames:
         assert json_obj[0]["white"] == 1
         assert json_obj[0]["black"] == 2
         assert json_obj[0]["whomst"] == 1
-        assert json_obj[0]["white_player_name"] == "fakeuser1"
-        assert json_obj[0]["black_player_name"] == "fakeuser2"
+        assert json_obj[0]["white_username"] == "fakeuser1"
+        assert json_obj[0]["black_username"] == "fakeuser2"
 
 
 class TestMove:

@@ -64,9 +64,18 @@ async def get_invitations(
         args["id_"] = invitation_id
     if status:
         args["status"] = status
-    result = await crud.get_invitations(**args)
+    invitations = await crud.get_invitations(**args)
 
-    return [vars(inv) for inv in result]
+    result = [
+        {
+            **vars(invitation_data["invitation"]),
+            "white_username": invitation_data["white_username"],
+            "black_username": invitation_data["black_username"],
+        }
+        for invitation_data in invitations
+    ]
+
+    return result
 
 
 @invitation_router.put("/{invitation_id}/accept")
@@ -83,7 +92,7 @@ async def accept_invitation(
             detail=f"invitation with ID '{invitation_id}' does not exist",
         )
 
-    invitation = invitation_list[0]
+    invitation = invitation_list[0]["invitation"]
     if credentials["user_id"] != invitation.to_id:
         raise HTTPException(
             status_code=403,
@@ -132,7 +141,7 @@ async def decline_invitation(
             detail=f"invitation with ID '{invitation_id}' does not exist",
         )
 
-    invitation = invitation_list[0]
+    invitation = invitation_list[0]["invitation"]
     if credentials["user_id"] != invitation.to_id:
         raise HTTPException(
             status_code=403,
@@ -179,7 +188,7 @@ async def cancel_invitation(
             detail=f"invitation with ID '{invitation_id}' does not exist",
         )
 
-    invitation = invitation_list[0]
+    invitation = invitation_list[0]["invitation"]
     if credentials["user_id"] != invitation.from_id:
         raise HTTPException(
             status_code=403,

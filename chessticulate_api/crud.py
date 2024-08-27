@@ -144,7 +144,7 @@ async def create_invitation(
 
 async def get_invitations(
     *, skip: int = 0, limit: int = 10, reverse: bool = False, **kwargs
-) -> list[models.Invitation]:
+) -> list[tuple[models.Invitation, str, str]]:
     """
     Retrieve a list of invitations from DB.
 
@@ -155,8 +155,22 @@ async def get_invitations(
         # get pending invitations addressed to user with ID 3
         get_invitations(skip=0, limit=5, to_id=3, status='PENDING')
     """
+
+    user_temp1 = aliased(models.User)
+    user_temp2 = aliased(models.User)
+
     async with db.async_session() as session:
-        stmt = select(models.Invitation)
+
+        stmt = (
+            select(
+                models.Invitation,
+                user_temp1.name.label("white_username"),
+                user_temp2.name.label("black_username"),
+            )
+            .join(user_temp1, models.Invitation.to_id == user_temp1.id_)
+            .join(user_temp2, models.Invitation.from_id == user_temp2.id_)
+        )
+
         for k, v in kwargs.items():
             stmt = stmt.where(getattr(models.Invitation, k) == v)
 
@@ -166,7 +180,17 @@ async def get_invitations(
             stmt = stmt.order_by(models.Invitation.date_sent.asc())
 
         stmt = stmt.offset(skip).limit(limit)
-        return [row[0] for row in (await session.execute(stmt)).all()]
+
+        result = (await session.execute(stmt)).all()
+
+        return [
+            {
+                "invitation": invitation,
+                "white_username": white_username,
+                "black_username": black_username,
+            }
+            for invitation, white_username, black_username in result
+        ]
 
 
 async def cancel_invitation(id_: int) -> bool:
@@ -272,8 +296,8 @@ async def get_games(
         stmt = (
             select(
                 models.Game,
-                user_temp1.name.label("white_player_name"),
-                user_temp2.name.label("black_player_name"),
+                user_temp1.name.label("white_username"),
+                user_temp2.name.label("black_username"),
             )
             .join(user_temp1, models.Game.white == user_temp1.id_)
             .join(user_temp2, models.Game.black == user_temp2.id_)
@@ -296,10 +320,10 @@ async def get_games(
         return [
             {
                 "game": game,
-                "white_player_name": white_player_name,
-                "black_player_name": black_player_name,
+                "white_username": white_username,
+                "black_username": black_username,
             }
-            for game, white_player_name, black_player_name in result
+            for game, white_username, black_username in result
         ]
 
 
