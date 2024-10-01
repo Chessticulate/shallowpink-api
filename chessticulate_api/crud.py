@@ -334,7 +334,7 @@ async def get_games(
         ]
 
 
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments, too-many-positional-arguments
 async def do_move(
     id_: int,
     user_id: int,

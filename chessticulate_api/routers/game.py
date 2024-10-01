@@ -11,7 +11,7 @@ from chessticulate_api import crud, schemas, security, workers_service
 game_router = APIRouter(prefix="/games")
 
 
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments, too-many-positional-arguments
 @game_router.get("")
 async def get_games(
     # pylint: disable=unused-argument

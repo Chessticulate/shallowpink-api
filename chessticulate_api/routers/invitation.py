@@ -31,7 +31,7 @@ async def create_invitation(
     return vars(result)
 
 
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments. too-many-positional-arguments
 @invitation_router.get("")
 async def get_invitations(
     credentials: Annotated[dict, Depends(security.get_credentials)],
