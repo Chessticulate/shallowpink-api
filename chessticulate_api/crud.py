@@ -1,5 +1,6 @@
 """chessticulate_api.crud"""
 
+import random
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
@@ -218,6 +219,8 @@ async def accept_invitation(id_: int) -> models.Game | None:
     """
     Accept pending invitation and create a new game.
 
+    Randomly assigns players to team colors.
+
     Returns None if invitation does not exist or does not have PENDING status.
     Returns a new game object on success.
     """
@@ -233,10 +236,14 @@ async def accept_invitation(id_: int) -> models.Game | None:
 
         invitation.status = models.InvitationStatus.ACCEPTED
         invitation.date_answered = datetime.now()
+
+        players = [invitation.from_id, invitation.to_id]
+        random.shuffle(players)
+
         new_game = models.Game(
-            white=invitation.from_id,
-            black=invitation.to_id,
-            whomst=invitation.from_id,
+            white=players[0],
+            black=players[1],
+            whomst=players[0],
             invitation_id=id_,
             game_type=invitation.game_type,
         )
@@ -327,7 +334,7 @@ async def get_games(
         ]
 
 
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments, too-many-positional-arguments
 async def do_move(
     id_: int,
     user_id: int,

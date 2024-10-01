@@ -10,7 +10,7 @@ from chessticulate_api import crud, schemas, security
 user_router = APIRouter(prefix="/users")
 
 
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments, too-many-positional-arguments
 @user_router.get("")
 async def get_users(
     # pylint: disable=unused-argument
