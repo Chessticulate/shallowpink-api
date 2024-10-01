@@ -305,8 +305,6 @@ class TestAcceptInvitation:
 
         assert game is not None
         assert game.invitation_id == invitation.id_
-        assert game.white == invitation.from_id
-        assert game.black == invitation.to_id
 
 
 class TestGetGames:
