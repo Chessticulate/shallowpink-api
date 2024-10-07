@@ -107,9 +107,7 @@ async def move(
 
 @game_router.post("/{game_id}/forfeit")
 async def forfeit(
-    credentials: Annotated[dict, Depends(security.get_credentials)],
-    game_id: str,
-    payload: schemas.ForfeitRequest,
+    credentials: Annotated[dict, Depends(security.get_credentials)], game_id: str
 ) -> schemas.ForfeitResponse:
     """Forfeit a given game"""
 
@@ -126,6 +124,6 @@ async def forfeit(
             status_code=403, detail=f"user '{user_id}' not a player in game '{game_id}'"
         )
 
-    quiter = await crud.forfeit(game_id, user_id, payload.status)
+    quiter = await crud.forfeit(game_id, user_id)
 
     return vars(quiter)

@@ -682,7 +682,6 @@ class TestForfeit:
         response = await client.post(
             "/games/1/forfeit",
             headers={"Authorization": f"Bearer {token}"},
-            json={"status": "RESIGNATION"},
         )
 
         assert response.status_code == 200
