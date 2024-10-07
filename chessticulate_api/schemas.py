@@ -213,12 +213,6 @@ class GetMovesListResponse(RootModel):
     root: list[GetMovesResponse]
 
 
-class ForfeitRequest(BaseModel):
-    """Pydantic model for forfeit game requests"""
-
-    status: str
-
-
 class ForfeitResponse(BaseModel):
     """Pydantic model for forfeit game response"""
 
