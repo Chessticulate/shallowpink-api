@@ -107,7 +107,7 @@ async def move(
 
 @game_router.post("/{game_id}/forfeit")
 async def forfeit(
-    credentials: Annotated[dict, Depends(security.get_credentials)], game_id: str
+    credentials: Annotated[dict, Depends(security.get_credentials)], game_id: int
 ) -> schemas.ForfeitResponse:
     """Forfeit a given game"""
 

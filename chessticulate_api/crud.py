@@ -415,7 +415,7 @@ async def get_moves(
         return [row[0] for row in (await session.execute(stmt)).all()]
 
 
-async def forfeit(id_, user_id):
+async def forfeit(id_: int, user_id: int) -> models.Game:
     """Forefeit game"""
 
     async with db.async_session() as session:
