@@ -310,7 +310,8 @@ async def get_games(
             .join(user_temp2, models.Game.black == user_temp2.id_)
         )
 
-        # if player_id is included in request, we want to query all games and return any where player_id == white or black
+        # if player_id is included in request,
+        # we want to query all games and return any where player_id == white or black
         if "player_id" in kwargs:
             player_id = kwargs.pop("player_id")
             stmt = stmt.where(
