@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 import bcrypt
 import jwt
 from pydantic import SecretStr
-from sqlalchemy import select, update
+from sqlalchemy import or_, select, update
 from sqlalchemy.orm import aliased
 
 from chessticulate_api import db, models
@@ -309,6 +309,14 @@ async def get_games(
             .join(user_temp1, models.Game.white == user_temp1.id_)
             .join(user_temp2, models.Game.black == user_temp2.id_)
         )
+
+        # if player_id is included in request,
+        # we want to query all games and return any where player_id == white or black
+        if "player_id" in kwargs:
+            player_id = kwargs.pop("player_id")
+            stmt = stmt.where(
+                or_(models.Game.white == player_id, models.Game.black == player_id)
+            )
 
         for k, v in kwargs.items():
             stmt = stmt.where(getattr(models.Game, k) == v)

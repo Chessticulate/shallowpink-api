@@ -17,6 +17,7 @@ async def get_games(
     # pylint: disable=unused-argument
     credentials: Annotated[dict, Depends(security.get_credentials)],
     game_id: int | None = None,
+    player_id: int | None = None,
     invitation_id: int | None = None,
     white_id: int | None = None,
     black_id: int | None = None,
@@ -41,6 +42,8 @@ async def get_games(
         args["whomst"] = whomst_id
     if winner_id:
         args["winner"] = winner_id
+    if player_id:
+        args["player_id"] = player_id
     games = await crud.get_games(**args)
 
     result = [
