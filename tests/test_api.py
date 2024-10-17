@@ -561,6 +561,17 @@ class TestGetGames:
         assert len(response.json()) == 2
 
     @pytest.mark.asyncio
+    async def test_get_games_succeeds_get_by_player_id_and_active(self, token):
+        response = await client.get(
+            "/games?player_id=1&is_active=True",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        json_obj = response.json()
+
+        assert response.status_code == 200
+        assert len(response.json()) == 1
+
+    @pytest.mark.asyncio
     async def test_get_games_succeeds_games_not_found(self, token):
         response = await client.get(
             "/games?player_id=1&black_id=2&white_id=3",
