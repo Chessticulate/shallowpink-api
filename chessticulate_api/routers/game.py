@@ -23,6 +23,7 @@ async def get_games(
     black_id: int | None = None,
     whomst_id: int | None = None,
     winner_id: int | None = None,
+    is_active: bool | None = None,
     skip: int = 0,
     limit: Annotated[int, Field(gt=0, le=50)] = 10,
     reverse: bool = False,
@@ -44,6 +45,8 @@ async def get_games(
         args["winner"] = winner_id
     if player_id:
         args["player_id"] = player_id
+    if is_active:
+        args["is_active"] = is_active
     games = await crud.get_games(**args)
 
     result = [

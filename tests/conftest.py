@@ -100,12 +100,14 @@ FAKE_INVITATION_DATA = [
 FAKE_GAME_DATA = [
     {
         "invitation_id": 1,
+        "is_active": True,
         "white": 1,
         "black": 2,
         "whomst": 1,
     },
     {
         "invitation_id": 2,
+        "is_active": False,
         "white": 3,
         "black": 1,
         "whomst": 3,
