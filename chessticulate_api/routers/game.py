@@ -64,7 +64,7 @@ async def get_games(
 @game_router.post("/{game_id}/move")
 async def move(
     credentials: Annotated[dict, Depends(security.get_credentials)],
-    game_id: str,
+    game_id: int,
     payload: schemas.DoMoveRequest,
 ) -> schemas.DoMoveResponse:
     """Attempt a move on a given game"""
