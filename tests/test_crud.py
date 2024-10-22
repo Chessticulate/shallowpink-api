@@ -354,11 +354,12 @@ class TestGetGames:
 
 class TestDoMove:
     @pytest.mark.parametrize(
-        "game_id, user_id, move, states, fen, status",
+        "game_id, user_id, whomst, move, states, fen, status",
         [
             (
                 1,
                 1,
+                2,
                 "e4",
                 '{ "-1219502575": "2", "-1950040747": "2", "1823187191": "1", "1287635123": "1" }',
                 "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
@@ -371,6 +372,7 @@ class TestDoMove:
         self,
         game_id,
         user_id,
+        whomst,
         move,
         states,
         fen,
@@ -385,7 +387,7 @@ class TestDoMove:
             == "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         )
 
-        await crud.do_move(game_id, user_id, move, states, fen, status)
+        await crud.do_move(game_id, user_id, whomst, move, states, fen, status)
 
         game_after_move = await crud.get_games(id_=game_id)
         assert (
@@ -400,13 +402,16 @@ class TestDoMove:
         assert game_after_move[0]["game"].winner == None
         assert game_after_move[0]["game"].result == None
         assert game_after_move[0]["game"].is_active == True
+        # assert that it is blacks turn after white moves
+        assert game_after_move[0]["game"].whomst == 2
 
     @pytest.mark.parametrize(
-        "game_id, user_id, move, states, fen, status",
+        "game_id, user_id, whomst, move, states, fen, status",
         [
             (
                 1,
                 1,
+                2,
                 "e4",
                 '{ "-1219502575": "2", "-1950040747": "2", "1823187191": "1", "1287635123": "1" }',
                 "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
@@ -419,6 +424,7 @@ class TestDoMove:
         self,
         game_id,
         user_id,
+        whomst,
         move,
         states,
         fen,
@@ -428,7 +434,7 @@ class TestDoMove:
         # assert default game.state
         game = await crud.get_games(id_=game_id)
 
-        await crud.do_move(game_id, user_id, move, states, fen, status)
+        await crud.do_move(game_id, user_id, whomst, move, states, fen, status)
         game_after_move = await crud.get_games(id_=game_id)
 
         assert game_after_move[0]["game"].last_active != None
