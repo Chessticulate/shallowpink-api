@@ -346,6 +346,7 @@ async def get_games(
 async def do_move(
     id_: int,
     user_id: int,
+    whomst: int,
     move: str,
     states: str,
     fen: str,
@@ -393,6 +394,7 @@ async def do_move(
                 result=result,
                 last_active=datetime.now(),
                 winner=winner,
+                whomst=whomst,
             )
         )
 
