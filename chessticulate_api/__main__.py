@@ -9,7 +9,9 @@ from chessticulate_api.config import CONFIG
 def main():
     """run API with uvicorn"""
 
-    LOGGING_CONFIG["formatters"]["default"]["fmt"] = "%(asctime)s %(levelprefix)s %(message)s"
+    LOGGING_CONFIG["formatters"]["default"][
+        "fmt"
+    ] = "%(asctime)s %(levelprefix)s %(message)s"
 
     uvicorn.run(
         "chessticulate_api:app",
