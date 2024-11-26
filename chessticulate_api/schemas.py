@@ -118,6 +118,13 @@ class GetUserResponse(BaseModel):
     losses: int
 
 
+class ExistsResponse(BaseModel):
+    """Pydantic model for checking whether something exists"""
+
+    exists: bool
+    detail: str
+
+
 class GetOwnUserResponse(GetUserResponse):
     """Pydantic model for getting own user info"""
 

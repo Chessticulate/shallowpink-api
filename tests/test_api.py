@@ -206,6 +206,42 @@ class TestGetUsers:
         assert user["email"] == "fakeuser1@fakeemail.com"
 
 
+class TestUsernameExists:
+    @pytest.mark.asyncio
+    async def test_username_exists(self):
+        response = await client.get("/users/name/" + "fakeuser1")
+        assert response.status_code == 200
+        content = response.json()
+        assert content["exists"] == True
+        assert content["detail"] == "username exists"
+
+    @pytest.mark.asyncio
+    async def test_username_doesnt_exist(self):
+        response = await client.get("/users/name/" + "nonexistentuser")
+        assert response.status_code == 200
+        content = response.json()
+        assert content["exists"] == False
+        assert content["detail"] == "username does not exist"
+
+
+class TestEmailExists:
+    @pytest.mark.asyncio
+    async def test_email_exists(self):
+        response = await client.get("/users/email/" + "fakeuser1@fakeemail.com")
+        assert response.status_code == 200
+        content = response.json()
+        assert content["exists"] == True
+        assert content["detail"] == "email exists"
+
+    @pytest.mark.asyncio
+    async def test_email_doesnt_exist(self):
+        response = await client.get("/users/email/" + "nonexistentuser@fakeemail.com")
+        assert response.status_code == 200
+        content = response.json()
+        assert content["exists"] == False
+        assert content["detail"] == "email does not exist"
+
+
 class TestDeleteUser:
     @pytest.mark.asyncio
     async def test_delete_user_fails_not_logged_in(self):

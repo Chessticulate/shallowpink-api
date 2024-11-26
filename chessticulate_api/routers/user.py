@@ -13,8 +13,7 @@ user_router = APIRouter(prefix="/users")
 # pylint: disable=too-many-arguments, too-many-positional-arguments
 @user_router.get("")
 async def get_users(
-    # pylint: disable=unused-argument
-    credentials: Annotated[dict, Depends(security.get_credentials)],
+    _: Annotated[dict, Depends(security.get_credentials)],
     user_id: int | None = None,
     user_name: str | None = None,
     skip: int = 0,
@@ -23,15 +22,32 @@ async def get_users(
     reverse: bool = False,
 ) -> schemas.GetUserListResponse:
     """Retrieve user info."""
-    if user_id:
-        return [vars(user) for user in await crud.get_users(id_=user_id)]
-
-    if user_name:
-        return [vars(user) for user in await crud.get_users(name=user_name)]
-
     args = {"skip": skip, "limit": limit, "order_by": order_by, "reverse": reverse}
 
+    if user_id:
+        args["id_"] = user_id
+    if user_name:
+        args["name"] = user_name
+
     return [vars(user) for user in await crud.get_users(**args)]
+
+
+@user_router.get("/name/{name}", status_code=200)
+async def username_exists(name: str) -> schemas.ExistsResponse:
+    """Check if a username is already taken"""
+    result = await crud.get_users(name=name)
+    if len(result) == 0:
+        return schemas.ExistsResponse(exists=False, detail="username does not exist")
+    return schemas.ExistsResponse(exists=True, detail="username exists")
+
+
+@user_router.get("/email/{email}", status_code=200)
+async def email_exists(email: str) -> schemas.ExistsResponse:
+    """Check if an email is already taken"""
+    result = await crud.get_users(email=email)
+    if len(result) == 0:
+        return schemas.ExistsResponse(exists=False, detail="email does not exist")
+    return schemas.ExistsResponse(exists=True, detail="email exists")
 
 
 @user_router.get("/self")
