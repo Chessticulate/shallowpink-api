@@ -378,7 +378,14 @@ async def do_move(
                 or status == models.GameResult.RESIGNATION
                 or status == models.GameResult.TIMEOUT
             ):
-                winner = user_id
+                # grab user name from get_games
+                game_list = await get_games(id_=id_)
+                game = game_list[0]
+                winner = (
+                    game["white_username"]
+                    if whomst == game["game"].white
+                    else game["black_username"]
+                )
 
         else:
             # status is either MOVEOK or CHECK if its not in GameResult
@@ -431,7 +438,11 @@ async def forfeit(id_: int, user_id: int) -> models.Game:
     async with db.async_session() as session:
         game_list = await get_games(id_=id_)
         game = game_list[0]["game"]
-        winner = game.white if user_id == game.black else game.black
+        winner = (
+            game_list[0]["white_username"]
+            if user_id == game.black
+            else game_list[0]["black_username"]
+        )
 
         stmt = (
             update(models.Game)

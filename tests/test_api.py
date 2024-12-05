@@ -720,7 +720,7 @@ class TestMove:
             assert response.json()["is_active"] == False
             assert response.json()["result"] == "CHECKMATE"
             assert response.json()["last_active"] != None
-            assert response.json()["winner"] == 1
+            assert response.json()["winner"] == "fakeuser2"
 
 
 class TestGetMoves:

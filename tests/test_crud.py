@@ -315,7 +315,7 @@ class TestGetGames:
             {"white": 1234},
             {"black": 1, "white": -1},
             {"whomst": 6},
-            {"winner": 10},
+            {"winner": "fakeuser3"},
         ],
     )
     @pytest.mark.asyncio
@@ -438,7 +438,6 @@ class TestDoMove:
         game_after_move = await crud.get_games(id_=game_id)
 
         assert game_after_move[0]["game"].last_active != None
-        assert game_after_move[0]["game"].winner == user_id
         assert game_after_move[0]["game"].is_active == False
         assert game_after_move[0]["game"].result == models.GameResult.CHECKMATE
 

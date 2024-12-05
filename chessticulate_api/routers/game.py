@@ -22,7 +22,7 @@ async def get_games(
     white_id: int | None = None,
     black_id: int | None = None,
     whomst_id: int | None = None,
-    winner_id: int | None = None,
+    winner: str | None = None,
     is_active: bool | None = None,
     skip: int = 0,
     limit: Annotated[int, Field(gt=0, le=50)] = 10,
@@ -41,8 +41,8 @@ async def get_games(
         args["black"] = black_id
     if whomst_id:
         args["whomst"] = whomst_id
-    if winner_id:
-        args["winner"] = winner_id
+    if winner:
+        args["winner"] = winner
     if player_id:
         args["player_id"] = player_id
     if is_active:

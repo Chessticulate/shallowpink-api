@@ -110,7 +110,7 @@ class Game(Base):
     white: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     black: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     whomst: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
-    winner: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=True)
+    winner: Mapped[str] = mapped_column(String, nullable=True)
     is_active: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=sql.true()
     )

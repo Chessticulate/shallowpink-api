@@ -166,7 +166,7 @@ class GetGameResponse(BaseModel):
     whomst: int
     is_active: bool
     result: str | None = None
-    winner: int | None = None
+    winner: str | None = None
     fen: str
 
 
@@ -197,7 +197,7 @@ class DoMoveResponse(BaseModel):
     whomst: int
     is_active: bool
     result: str | None = None
-    winner: int | None = None
+    winner: str | None = None
     fen: str
 
 
@@ -235,5 +235,5 @@ class ForfeitResponse(BaseModel):
     whomst: int
     is_active: bool
     result: str | None = None
-    winner: int | None = None
+    winner: str | None = None
     fen: str
