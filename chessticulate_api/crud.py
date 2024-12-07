@@ -280,7 +280,7 @@ async def get_games(
     *,
     skip: int = 0,
     limit: int = 10,
-    order_by: str = "date_started",
+    order_by: str = "last_active",
     reverse: bool = False,
     **kwargs,
 ) -> list[tuple[models.Game, str, str]]:

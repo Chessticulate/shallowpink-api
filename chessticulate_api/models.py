@@ -74,7 +74,9 @@ class Invitation(Base):  # pylint: disable=too-few-public-methods
 
     id_: Mapped[int] = mapped_column("id", primary_key=True)
     date_sent: Mapped[str] = mapped_column(
-        DateTime, server_default=func.now()  # pylint: disable=not-callable
+        DateTime,
+        nullable=False,
+        server_default=func.now(),  # pylint: disable=not-callable
     )
     date_answered: Mapped[str] = mapped_column(DateTime, nullable=True)
     from_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
@@ -87,9 +89,7 @@ class Invitation(Base):  # pylint: disable=too-few-public-methods
     )
 
 
-# pylint: disable=not-callable
-# pylint: disable=too-few-public-methods
-class Game(Base):
+class Game(Base):  # pylint: disable=too-few-public-methods
     """Game SQL Model"""
 
     __tablename__ = "games"
@@ -100,13 +100,17 @@ class Game(Base):
     )
     date_started: Mapped[str] = mapped_column(
         DateTime,
-        server_default=func.now(),
-        nullable=True,
+        server_default=func.now(),  # pylint: disable=not-callable
+        nullable=False,
     )
     invitation_id: Mapped[int] = mapped_column(
         ForeignKey("invitations.id"), nullable=False
     )
-    last_active: Mapped[str] = mapped_column(DateTime, nullable=True)
+    last_active: Mapped[str] = mapped_column(
+        DateTime,
+        server_default=func.now(),  # pylint: disable=not-callable
+        nullable=False,
+    )
     white: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     black: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     whomst: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
@@ -130,7 +134,7 @@ class Game(Base):
     )
 
 
-class Move(Base):
+class Move(Base):  # pylint: disable=too-few-public-methods
     """Move SQL Model"""
 
     __tablename__ = "moves"
@@ -141,7 +145,7 @@ class Move(Base):
     timestamp: Mapped[str] = mapped_column(
         DateTime,
         server_default=func.now(),  # pylint: disable=not-callable
-        nullable=True,
+        nullable=False,
     )
     movestr: Mapped[str] = mapped_column(String, nullable=False)
     fen: Mapped[str] = mapped_column(String, nullable=False)
