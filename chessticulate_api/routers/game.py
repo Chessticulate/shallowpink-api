@@ -45,7 +45,7 @@ async def get_games(
         args["winner"] = winner_id
     if player_id:
         args["player_id"] = player_id
-    if is_active:
+    if is_active is not None:
         args["is_active"] = is_active
     games = await crud.get_games(**args)
 

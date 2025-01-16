@@ -114,6 +114,7 @@ FAKE_GAME_DATA = [
     },
     {
         "invitation_id": 3,
+        "is_active": True,
         "white": 2,
         "black": 3,
         "whomst": 2,
